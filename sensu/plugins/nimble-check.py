@@ -115,6 +115,7 @@ class NimbleStorageCheck(SensuPluginCheck):
             total_mb = self._get_array_total_mb(array)
             free_mb = self._get_array_available_mb(array)
             free_percent = 100 * float(free_mb)/float(total_mb)
+            print "%s: %s mb Total, %s mb Used, %s percent free" % (array, total_mb, free_mb, free_percent)
             if self.options.critical and free_percent < self.options.critical:
                 crit_arrays.append(array)
             elif self.options.warning and free_percent < self.options.warning:
