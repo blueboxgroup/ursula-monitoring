@@ -51,9 +51,10 @@ def main():
         hypervisors = client.hypervisors.list()
 
     for hv in hypervisors:
+        hostname = hv.hypervisor_hostname.split('.')[0]
         for key, value in hv.to_dict().iteritems():
             if key in METRIC_KEYS:
-                output_metric('{}.{}.{}'.format(args.scheme, hv.hypervisor_hostname, key), value)
+                output_metric('{}.{}.{}'.format(args.scheme, hostname, key), value)
 
 if __name__ == '__main__':
     main()
