@@ -149,6 +149,7 @@ MYSQL_STATUS_VARS = {
 	'Threads_created': 'counter',
 	'Threads_running': 'gauge',
 	'Uptime': 'gauge',
+	'wsrep_cluster_size': 'gauge'
 }
 
 MYSQL_VARS = [
@@ -455,8 +456,10 @@ def dispatch_value(prefix, key, value, type, type_instance=None):
 	if not type_instance:
 		type_instance = key
 
-	value = int(value) # safety check
 	log_verbose('Sending value: %s/%s=%s' % (prefix, type_instance, value))
+	if not value:
+		return
+	value = int(value) # safety check
 
 	val               = collectd.Values(plugin='mysql', plugin_instance=prefix)
 	val.type          = type
