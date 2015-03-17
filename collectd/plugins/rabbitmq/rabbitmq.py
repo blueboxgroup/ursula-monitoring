@@ -83,7 +83,7 @@ def get_info(url):
 
 
 def dispatch_values(values, host, plugin, plugin_instance, metric_type,
-                    type_instance=None):
+                    type_instance=None, vhost=None):
     '''
     dispatch metrics to collectd
     Args:
@@ -101,6 +101,8 @@ def dispatch_values(values, host, plugin, plugin_instance, metric_type,
     metric = collectd.Values()
     if host:
         metric.host = host
+    if vhost:
+        metric.host = "%s_%s" % ( metric.host, vhost )
     metric.plugin = plugin
     if plugin_instance:
         metric.plugin_instance = plugin_instance
@@ -111,34 +113,34 @@ def dispatch_values(values, host, plugin, plugin_instance, metric_type,
     metric.dispatch()
 
 
-def dispatch_message_stats(data, vhost, plugin, plugin_instance):
+def dispatch_message_stats(data, vhost, plugin, plugin_instance, host):
     """
     Sends message stats to collectd.
     """
     if not data:
         collectd.debug("No data for %s in vhost %s" % (plugin, vhost))
         return
-
     for name in MESSAGE_STATS:
-        dispatch_values((data.get(name, 0),), vhost, plugin,
-                        plugin_instance, name)
+        dispatch_values((data.get(name, 0),), host, plugin,
+                        plugin_instance, name, vhost=vhost)
 
 
-def dispatch_queue_metrics(queue, vhost):
+def dispatch_queue_metrics(queue, vhost, node):
     '''
     Dispatches queue metrics for queue in vhost
     '''
 
     vhost_name = 'rabbitmq_%s' % (vhost['name'].replace('/', 'default'))
+    host = node['name'].split('@')[1]
     for name in QUEUE_STATS:
         values = list((queue.get(name, 0),))
-        dispatch_values(values, vhost_name, 'queues', queue['name'],
-                        'rabbitmq_%s' % name)
+        dispatch_values(values, host, 'queues', queue['name'],
+                        'rabbitmq_%s' % name, vhost=vhost_name)
 
     for name in QUEUE_MESSAGE_STATS:
         values = list((queue.get(name, 0),))
-        dispatch_values(values, vhost_name, 'queues', queue['name'],
-                        'rabbitmq_%s' % name)
+        dispatch_values(values, host, 'queues', queue['name'],
+                        'rabbitmq_%s' % name, vhost=vhost_name)
 
         details = queue.get("%s_details" % name, None)
         if not details:
@@ -146,20 +148,21 @@ def dispatch_queue_metrics(queue, vhost):
         values = list()
         for detail in MESSAGE_DETAIL:
             values.append(details.get(detail, 0))
-        dispatch_values(values, vhost_name, 'queues', queue['name'],
-                        'rabbitmq_details', name)
+        dispatch_values(values, host, 'queues', queue['name'],
+                        'rabbitmq_details', name, vhost=vhost_name)
 
     dispatch_message_stats(queue.get('message_stats', None), vhost_name,
-                           'queues', queue['name'])
+                           'queues', queue['name'], host)
 
 
-def dispatch_exchange_metrics(exchange, vhost):
+def dispatch_exchange_metrics(exchange, vhost, node):
     '''
     Dispatches exchange metrics for exchange in vhost
     '''
     vhost_name = 'rabbitmq_%s' % vhost['name'].replace('/', 'default')
+    host = node['name'].split('@')[1]
     dispatch_message_stats(exchange.get('message_stats', None), vhost_name,
-                           'exchanges', exchange['name'])
+                           'exchanges', exchange['name'], host)
 
 
 def dispatch_node_metrics(node):
@@ -221,7 +224,7 @@ def read(input_data=None):
                                                            vhost_name,
                                                            queue_name))
                 if queue_data is not None:
-                    dispatch_queue_metrics(queue_data, vhost)
+                    dispatch_queue_metrics(queue_data, vhost, node)
                 else:
                     collectd.warning("Cannot get data back from %s/%s queue" %
                                     (vhost_name, queue_name))
@@ -233,7 +236,7 @@ def read(input_data=None):
                 collectd.debug("Found exchange %s" % exchange['name'])
                 exchange_data = get_info("%s/exchanges/%s/%s" % (
                                          base_url, vhost_name, exchange_name))
-                dispatch_exchange_metrics(exchange_data, vhost)
+                dispatch_exchange_metrics(exchange_data, vhost, node)
 
 
 def shutdown():
