@@ -19,7 +19,7 @@ import os
 import subprocess
 import sys
 
-from novaclient.v2.client import Client as nova_client
+from novaclient.v1_1.client import Client as nova_client
 
 CREDS = {
     'username': os.environ['OS_USERNAME'],
@@ -74,7 +74,7 @@ def main():
                 print "Volume %s is 'in-use' but not " \
                       "connected" % vol['id']
                 failure = True
-    except Exeception as e:
+    except Exception as e:
         print "Could not run check: %s" % e
         sys.exit(2)
     sys.exit(failure)
