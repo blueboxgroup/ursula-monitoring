@@ -19,7 +19,7 @@ import os
 import subprocess
 import sys
 
-from novaclient.v2.client import Client as nova_client
+from novaclient.v1_1.client import Client as nova_client
 
 CREDS = {
     'username': os.environ['OS_USERNAME'],
