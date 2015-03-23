@@ -56,10 +56,17 @@ def _get_local_active_instance_volumes():
 
 def _get_active_iscsi_volumes():
     volumes = set()
-    out = subprocess.check_output(['iscsiadm', '-m', 'session'])
-    for line in out.strip().split('\n'):
-        parts = line.split(':')
-        volumes.add(parts[-1][7:])  # remove 'volume-'
+    try:
+        out = subprocess.check_output(['iscsiadm', '-m', 'session'])
+        for line in out.strip().split('\n'):
+            parts = line.split(':')
+            volumes.add(parts[-1][7:])  # remove 'volume-'
+    except Exception, e:
+        # iscsiadm returns 21 if there are no active sessions.
+        if e.returncode == 21:
+            pass
+        else:
+            raise
     return list(volumes)
 
 
