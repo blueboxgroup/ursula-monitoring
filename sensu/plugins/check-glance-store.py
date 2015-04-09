@@ -28,6 +28,7 @@ glance_auth = {
 argparser = argparse.ArgumentParser()
 argparser.add_argument('--imagedir', help='Glance file store image directory',
                     default='/var/lib/glance/images')
+argparser.add_argument('--debug', help='Enable API debugging', action='store_true')
 options = argparser.parse_args()
 
 store_directory = options.imagedir
@@ -42,7 +43,9 @@ auth_token = keystone.auth_token
 endpoint = keystone.service_catalog.url_for(service_type='image',
                                             endpoint_type='publicURL')
 
-# logging.basicConfig(level=logging.DEBUG)
+if options.debug:
+    logging.basicConfig(level=logging.DEBUG)
+
 glance = client.Client('2', endpoint=endpoint, token=auth_token)
 glance.format = 'json'
 
@@ -57,7 +60,8 @@ files = [(x, os.path.getsize(p),
 
 # Fetch the list of glance images
 glance_images = []
-for x in glance.images.list():
+kwargs = {'sort_key': 'id', 'sort_dir': 'asc', 'owner': None, 'filters': {}, 'is_public': None}
+for x in glance.images.list(**kwargs):
     if x.status == 'active':
         tz_aware_time = parser.parse(x.created_at)
         glance_images.append((x.id, x.size, tz_aware_time))
