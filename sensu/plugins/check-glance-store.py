@@ -62,6 +62,17 @@ files = [(x, os.path.getsize(p),
 glance_images = []
 kwargs = {'sort_key': 'id', 'sort_dir': 'asc', 'owner': None, 'filters': {}, 'is_public': None}
 for x in glance.images.list(**kwargs):
+
+    # weed out any images that will not be on disk
+    check_locally = False
+    for location in x.locations:
+        if location['url'].startswith('file:///'):
+            check_locally = True
+    if not check_locally:
+        continue
+    if hasattr(x, 'block_device_mapping'):
+        continue
+
     if x.status == 'active':
         tz_aware_time = parser.parse(x.created_at)
         glance_images.append((x.id, x.size, tz_aware_time))
