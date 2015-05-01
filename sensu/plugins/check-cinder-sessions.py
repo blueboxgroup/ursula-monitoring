@@ -60,7 +60,7 @@ def _get_active_iscsi_volumes():
         out = subprocess.check_output(['iscsiadm', '-m', 'session'])
         for line in out.strip().split('\n'):
             parts = line.split(':')
-            volumes.add(parts[-1][7:])  # remove 'volume-'
+            volumes.add(parts[-1][7:43])  # remove 'volume-'
     except Exception, e:
         # iscsiadm returns 21 if there are no active sessions.
         if e.returncode == 21:
