@@ -50,7 +50,7 @@ def _get_local_active_instance_volumes():
         attached_vols = \
             getattr(server, 'os-extended-volumes:volumes_attached')
         if server_hv == hostname and len(attached_vols):
-            local_attached_vols += attached_vols
+            local_attached_vols.append([ getattr(server, 'id'), attached_vols ])
     return local_attached_vols
 
 
@@ -76,11 +76,11 @@ def main():
         expected_vols = _get_local_active_instance_volumes()
         connected_vols = _get_active_iscsi_volumes()
 
-        for vol in expected_vols:
-            if not vol['id'] in connected_vols:
-                print "Volume %s is 'in-use' but not " \
-                      "connected" % vol['id']
-                failure = True
+        for vm_and_vols in expected_vols:
+            if not vm_and_vols[1][0]['id'] in connected_vols:
+                print "The instance %s has the volume %s attached, " \
+                      "but that volume does not have an iscsi session" \
+                      % (vm_and_vols[0], vm_and_vols[1][0]['id'],)
     except Exception as e:
         print "Could not run check: %s" % e
         sys.exit(2)
