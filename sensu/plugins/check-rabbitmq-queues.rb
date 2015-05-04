@@ -35,6 +35,12 @@ class CheckRabbitCluster < Sensu::Plugin::Check::CLI
           :valid => %w[length number],
           :default => 'length'
 
+  option  :timeout,
+          :description => "timeout in seconds when querying rabbit",
+          :short => '-m SECONDS',
+          :long => '--timeout SECONDS',
+          :default => 1
+
   def set_defaults
     if config[:type] == 'length'
       config[:warning] = 5 unless !config[:warning].nil?
@@ -53,7 +59,7 @@ class CheckRabbitCluster < Sensu::Plugin::Check::CLI
     ignored_queues = config[:ignore].split(',') unless config[:ignore] == nil
 
     count = 0
-    cmd = "/usr/bin/timeout -s 9 1s /usr/sbin/rabbitmqctl list_queues -p /"
+    cmd = "/usr/bin/timeout -s 9 #{config[:timeout]}s /usr/sbin/rabbitmqctl list_queues -p /"
     process = IO.popen(cmd) do |io|
       while line = io.gets
         line.chomp!
