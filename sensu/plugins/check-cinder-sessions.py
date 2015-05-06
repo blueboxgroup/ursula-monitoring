@@ -78,11 +78,11 @@ def main():
 
         for vm_and_vols in expected_vols:
             if not vm_and_vols[1][0]['id'] in connected_vols:
-                print "The instance %s has the volume %s attached, " \
+                print("The instance %s has the volume %s attached, " \
                       "but that volume does not have an iscsi session" \
-                      % (vm_and_vols[0], vm_and_vols[1][0]['id'],)
+                      % (vm_and_vols[0], vm_and_vols[1][0]['id'],))
     except Exception as e:
-        print "Could not run check: %s" % e
+        print("Could not run check: %s" % e)
         sys.exit(2)
     sys.exit(failure)
 
