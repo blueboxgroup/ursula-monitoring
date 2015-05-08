@@ -1,4 +1,4 @@
-#!/usr/bin/env /opt/sensu/embedded/bin/ruby
+#!/opt/sensu/embedded/bin/ruby
 #
 #
 
