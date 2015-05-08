@@ -7,26 +7,25 @@ require 'sensu-plugin/check/cli'
 
 class CheckNetworkStats < Sensu::Plugin::Check::CLI
 
-    linkspeed = "ethtool eth0 | grep Speed"
-    if linkspeed.include? "10000Mb"
+  linkspeed = `ethtool eth0 | grep Speed`
+  puts linkspeed
+
+  if linkspeed.include? "10000Mb"
+  linkwarn = 9000
+  linkcrit = 12000
+  else
+  linkwarn = 900
+  linkcrit = 1200
+  end
+
   option :warn,
     :short => '-w WARN',
     :proc => proc {|a| a.to_i },
-    :default => 900000
+    :default => linkwarn
   option :crit,
     :short => '-c CRIT',
     :proc => proc {|a| a.to_i },
-    :default => 1200000
-    else
-  option :warn,
-    :short => '-w WARN',
-    :proc => proc {|a| a.to_i },
-    :default => 90000
-  option :crit,
-    :short => '-c CRIT',
-    :proc => proc {|a| a.to_i },
-    :default => 120000
-    end
+    :default => linkcrit
   option :rxmcswarn,
     :short => '-pw WARN',
     :proc => proc {|a| a.to_i },
@@ -35,12 +34,16 @@ class CheckNetworkStats < Sensu::Plugin::Check::CLI
     :short => '-pc CRIT',
     :proc => proc {|a| a.to_i },
     :default => 10000
+  option :iface,
+    :short => '-i IFACE',
+    :default => "eth0"
 
-  def run
-    `sar -n DEV 5 1 | grep Average | grep "eth0 "`.each_line do |line|  # rubocop:disable Style/Next
-      stats = line.split
+def run
+     iface = config[:iface]
+    `sar -n DEV 5 1 | grep Average | grep "#{iface} "`.each_line do |line|
+     stats = line.split
       unless stats.empty?
-        stats.shift 
+        stats.shift
         nic = stats.shift
         stats.map! { |x| x.to_f }
         rxpck, txpck, rxkB, txkB, rxcmp, txcmp, rxmcs = stats
@@ -50,7 +53,7 @@ class CheckNetworkStats < Sensu::Plugin::Check::CLI
 
         warning if rxkB >= config[:warn] or rxkB <= -config[:warn]
         warning if txkB >= config[:warn] or txkB <= -config[:warn]
-        warning if rxmcs >= config[:rmcswarn] or rxmcs <= -config[:rmcswarn]
+        warning if rxmcs >= config[:rxmcswarn] or rxmcs <= -config[:rxmcswarn]
         critical if rxkB >= config[:crit] or rxkB <= -config[:crit]
         critical if txkB >= config[:crit] or txkB <= -config[:crit]
         critical if rxmcs >= config[:rxmcscrit] or rxmcs <= -config[:rxmcscrit]
@@ -58,5 +61,5 @@ class CheckNetworkStats < Sensu::Plugin::Check::CLI
         ok
       end
     end
+   end
   end
-end
