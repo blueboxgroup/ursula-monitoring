@@ -11,11 +11,11 @@ class CheckNetworkStats < Sensu::Plugin::Check::CLI
   puts linkspeed
 
   if linkspeed.include? "10000Mb"
-  linkwarn = 9000
-  linkcrit = 12000
-  else
-  linkwarn = 900
-  linkcrit = 1200
+    linkwarn = 9000
+    linkcrit = 12000
+    else
+    linkwarn = 900
+    linkcrit = 1200
   end
 
   option :warn,
