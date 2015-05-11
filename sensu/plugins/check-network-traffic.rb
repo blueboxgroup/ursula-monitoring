@@ -12,7 +12,7 @@ class CheckNetworkStats < Sensu::Plugin::Check::CLI
   if linkspeed.include? "10000Mb"
     linkwarn = 9000
     linkcrit = 12000
-    else
+  else
     linkwarn = 900
     linkcrit = 1200
   end
@@ -37,27 +37,27 @@ class CheckNetworkStats < Sensu::Plugin::Check::CLI
     :short => '-i IFACE',
     :default => "eth0"
 
-def run
-     iface = config[:iface]
-     line = %x{sar -n DEV 5 1}.lines.find { |x| x =~ /Average/ && x =~/\s#{iface}\s/ }
-     stats = line.split
-      unless stats.empty?
-        stats.shift
-        nic = stats.shift
-        stats.map! { |x| x.to_f }
-        rxpck, txpck, rxkB, txkB, rxcmp, txcmp, rxmcs = stats
+  def run
+    iface = config[:iface]
+    line = %x{sar -n DEV 5 1}.lines.find { |x| x =~ /Average/ && x =~/\s#{iface}\s/ }
+    stats = line.split
+    unless stats.empty?
+      stats.shift
+      nic = stats.shift
+      stats.map! { |x| x.to_f }
+      rxpck, txpck, rxkB, txkB, rxcmp, txcmp, rxmcs = stats
 
-        msg = "\nIngress kB/s=#{rxkB} \nEgress kB/s=#{txkB} \nIngress multicast packets per second=#{rxmcs}"
-        message msg
+      msg = "\nIngress kB/s=#{rxkB} \nEgress kB/s=#{txkB} \nIngress multicast packets per second=#{rxmcs}"
+      message msg
 
-        warning if rxkB >= config[:warn] or rxkB <= -config[:warn]
-        warning if txkB >= config[:warn] or txkB <= -config[:warn]
-        warning if rxmcs >= config[:rxmcswarn] or rxmcs <= -config[:rxmcswarn]
-        critical if rxkB >= config[:crit] or rxkB <= -config[:crit]
-        critical if txkB >= config[:crit] or txkB <= -config[:crit]
-        critical if rxmcs >= config[:rxmcscrit] or rxmcs <= -config[:rxmcscrit]
+      warning if rxkB >= config[:warn] or rxkB <= -config[:warn]
+      warning if txkB >= config[:warn] or txkB <= -config[:warn]
+      warning if rxmcs >= config[:rxmcswarn] or rxmcs <= -config[:rxmcswarn]
+      critical if rxkB >= config[:crit] or rxkB <= -config[:crit]
+      critical if txkB >= config[:crit] or txkB <= -config[:crit]
+      critical if rxmcs >= config[:rxmcscrit] or rxmcs <= -config[:rxmcscrit]
 
-        ok
+      ok
     end
-   end
   end
+end
