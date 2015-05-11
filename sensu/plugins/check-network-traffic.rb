@@ -8,7 +8,6 @@ require 'sensu-plugin/check/cli'
 class CheckNetworkStats < Sensu::Plugin::Check::CLI
 
   linkspeed = `ethtool eth0 | grep Speed`
-  puts linkspeed
 
   if linkspeed.include? "10000Mb"
     linkwarn = 9000
@@ -40,7 +39,7 @@ class CheckNetworkStats < Sensu::Plugin::Check::CLI
 
 def run
      iface = config[:iface]
-    `sar -n DEV 5 1 | grep Average | grep "#{iface} "`.each_line do |line|
+     line = %x{sar -n DEV 5 1}.lines.find { |x| x =~ /Average/ && x =~/\s#{iface}\s/ }
      stats = line.split
       unless stats.empty?
         stats.shift
@@ -59,7 +58,6 @@ def run
         critical if rxmcs >= config[:rxmcscrit] or rxmcs <= -config[:rxmcscrit]
 
         ok
-      end
     end
    end
   end
