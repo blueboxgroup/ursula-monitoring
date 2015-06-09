@@ -1217,9 +1217,22 @@ MAIN: {
   }
   if(defined($version)){ print $NAME . "\nVersion: ". $VERSION . "\n"; }
   # Check storcli tool
-  $storcli = `which storcli64`;
-  chomp($storcli);
-  if($storcli eq ""){
+  if(!defined($storcli)){
+    eval('use File::Which');
+    if($platform eq 'linux'){
+      $storcli = which('storcli');
+      if(!defined($storcli)){
+        $storcli = which('storcli64');
+      }
+    }
+    else{
+      $storcli = which('storcli.exe');
+      if(!defined($storcli)){
+        $storcli = which('storcli64.exe');
+      }
+    }
+  }
+  if(!defined($storcli)){
     print "Error: cannot find storcli executable.\n";
     print "Ensure storcli is in your path, or use the '-p <storcli path>' switch!\n";
     exit(STATE_UNKNOWN);
