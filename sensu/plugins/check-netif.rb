@@ -66,8 +66,6 @@ class NetIFMetrics < Sensu::Plugin::Check::CLI
           elsif rx_mbps > config[:warn] || tx_mbps > config[:warn]
             status = "#{nic} #{rx_mbps} rx_mbps or #{tx_mbps} tx_mbps  is pretty high"
             warning status
-          else
-            ok
           end
         end
       end
