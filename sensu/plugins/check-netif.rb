@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby
+#!/opt/sensu/embedded/bin/ruby
 #
 #   netif-metrics
 #
