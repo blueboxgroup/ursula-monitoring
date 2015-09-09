@@ -28,6 +28,8 @@ class CheckOSApi < Sensu::Plugin::Check::CLI
       "keystone endpoint-list"
     when "heat"
       "heat stack-list"
+    when "ceilometer"
+      "ceilometer meter-list"
     end
   end
 
