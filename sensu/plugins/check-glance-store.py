@@ -17,7 +17,7 @@ from keystoneclient.v2_0 import client as ksclient
 
 def is_remote_image(image):
     if image.get('location'):
-        http_re = re.compile(r'^https?://')
+        http_re = re.compile(r'^(http|https|ftp)://')
         return http_re.match(image.location)
     return False
 
