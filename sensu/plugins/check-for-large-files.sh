@@ -35,9 +35,10 @@ fi
 WARN=${WARN:=3}
 CRIT=${CRIT:=10}
 DIR=${DIR:=/var/log}
-SIZE=${SIZE:=1048576}
+SIZE=${SIZE:=1024M}
 
-NUM_FILES=`find ${DIR} -type f -size +${SIZE} | wc -l`
+FILES=$(find ${DIR} -type f -size +${SIZE})
+NUM_FILES=$(echo "$FILES" | wc -l)
 
 if (( $NUM_FILES == 1)); then
   FILE=file
@@ -45,7 +46,8 @@ else
   FILE=files
 fi
 
-output="$NUM_FILES $FILE bigger than ${SIZE} in ${DIR}"
+output="$NUM_FILES $FILE bigger than ${SIZE} in ${DIR}
+${FILES}"
 
 if (( $NUM_FILES >= $CRIT )); then
   echo "CRITICAL - $output"
