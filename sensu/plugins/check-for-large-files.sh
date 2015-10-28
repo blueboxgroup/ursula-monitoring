@@ -38,7 +38,7 @@ DIR=${DIR:=/var/log}
 SIZE=${SIZE:=1024M}
 
 FILES=$(find ${DIR} -type f -size +${SIZE})
-NUM_FILES=$(echo "$FILES" | wc -l)
+NUM_FILES=$(echo "$FILES" | grep -v '^$' | wc -l)
 
 if (( $NUM_FILES == 1)); then
   FILE=file
