@@ -2,8 +2,8 @@
 #
 # Makes http calls to the different components to gather metric data
 #
-# return CRITICAL if any commands fail
-# return WARNING if no commands fail, but one or more timeout
+# Output service metrics for time taken, HTTP status code and status(0=Fail, 1=OK)
+# When failing on a dependency, dummy HTTP status codes (600 or 700) are used
 #
 #
 # Jose L Coello Enriquez <jlcoello@us.ibm.com>
@@ -183,7 +183,10 @@ def main():
         token = access['token']['id']
 
     if not token:
-        sys.exit(STATE_CRITICAL)
+        metric_data.append('%s.code %s %s' % (scheme, 700, timestamp))
+        metric_data.append('%s.status %s %s' % (scheme, 0, timestamp))
+        print_metric(metric_data)
+        sys.exit(STATE_OK)
 
     tenant_id = access['token']['tenant']['id']
 
