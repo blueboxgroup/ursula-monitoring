@@ -93,7 +93,7 @@ for image_file in files:
 # Check glance image file sizes match files
 for image in glance_images:
     for image_file in [x for x in files if x[0] == image[0]]:
-        if image[1] != image_file[1]:
+        if image[1] != image_file[1] and image_file[2] < alert_squelch:
             print "Glance image %s size differs from file on disk" % image[0]
             result = 2
 
