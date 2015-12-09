@@ -83,14 +83,14 @@ for image in [x for x in glance_images if x[2] < time_cutoff]:
             print "Glance image %s not found in %s" % (image[0], store_directory)
             result = 2
 
-# Check all files have a corresponding glance image and ignore brand new files
+# Check all files have a corresponding glance image and ignore brand new / zero size files
 for image_file in files:
-    if not [x for x in glance_images if x[0] == image_file[0]] and image_file[2] < alert_squelch:
+    if not [x for x in glance_images if x[0] == image_file[0]] and image_file[2] < alert_squelch and image_file[1] > 0:
         print "Unknown file %s found in %s" % (image_file[0], store_directory)
         result = 2
 
 
-# Check glance image file sizes match files
+# Check glance image file sizes match files and ignore difference for squelch
 for image in glance_images:
     for image_file in [x for x in files if x[0] == image[0]]:
         if image[1] != image_file[1] and image_file[2] < alert_squelch:
