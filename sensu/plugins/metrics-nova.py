@@ -11,7 +11,7 @@ import socket
 import time
 import os
 
-from novaclient.v1_1 import Client
+from novaclient.client import Client
 
 DEFAULT_SCHEME = '{}.nova.hypervisors'.format(socket.gethostname())
 
@@ -43,7 +43,9 @@ def main():
 
     args.user
 
-    client = Client(args.user, args.password, args.tenant, args.auth_url, service_type=args.service_type)
+    client = Client(version=2, username=args.user, api_key=args.password,
+                    project_id=args.tenant, auth_url=args.auth_url,
+                    service_type=args.service_type)
 
     if args.host:
         hypervisors = client.hypervisors.search(args.host)
