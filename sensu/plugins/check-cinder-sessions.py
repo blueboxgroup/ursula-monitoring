@@ -19,7 +19,7 @@ import os
 import subprocess
 import sys
 
-from novaclient.v1_1.client import Client as nova_client
+from novaclient.client import Client as nova_client
 
 CREDS = {
     'username': os.environ['OS_USERNAME'],
@@ -38,7 +38,7 @@ def _get_local_active_instance_volumes():
     hostname = _get_hostname()
 
     local_attached_vols = []
-    nova = nova_client(**CREDS)
+    nova = nova_client(version=2, **CREDS)
     search_opts = {
         'all_tenants': True
     }
