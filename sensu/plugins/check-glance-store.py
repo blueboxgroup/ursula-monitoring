@@ -15,6 +15,11 @@ from glanceclient import client
 from iso8601 import iso8601
 from keystoneclient.v2_0 import client as ksclient
 
+def is_remote_image(image):
+    if image.get('location'):
+        http_re = re.compile(r'^(http|https|ftp)://')
+        return http_re.match(image.location)
+    return False
 
 glance_auth = {
     'username':    os.environ['OS_USERNAME'],
@@ -64,30 +69,31 @@ kwargs = {'sort_key': 'id', 'sort_dir': 'asc', 'owner': None, 'filters': {}, 'is
 for x in glance.images.list(**kwargs):
     if x.status == 'active':
         tz_aware_time = parser.parse(x.created_at)
-        glance_images.append((x.id, x.size, tz_aware_time))
+        glance_images.append((x.id, x.size, tz_aware_time, is_remote_image(x)))
 
 # Check all active images 1 hour or older are present
 time_cutoff = datetime.now(iso8601.Utc()) - timedelta(0, 3600)
+alert_squelch = datetime.now(iso8601.Utc()) - timedelta(0, 43200) # 12 hours
 
 result = 0
 
 for image in [x for x in glance_images if x[2] < time_cutoff]:
     if not [x for x in files if x[0] == image[0]]:
-        print "Glance image %s not found in %s" % (image[0], store_directory)
-        result = 2
+        if image[3] == False:
+            print "Glance image %s not found in %s" % (image[0], store_directory)
+            result = 2
 
-
-# Check all files have a corresponding glance image
+# Check all files have a corresponding glance image and ignore brand new / zero size files
 for image_file in files:
-    if not [x for x in glance_images if x[0] == image_file[0]]:
+    if not [x for x in glance_images if x[0] == image_file[0]] and image_file[2] < alert_squelch and image_file[1] > 0:
         print "Unknown file %s found in %s" % (image_file[0], store_directory)
         result = 2
 
 
-# Check glance image file sizes match files
+# Check glance image file sizes match files and ignore difference for squelch
 for image in glance_images:
     for image_file in [x for x in files if x[0] == image[0]]:
-        if image[1] != image_file[1]:
+        if image[1] != image_file[1] and image_file[2] < alert_squelch:
             print "Glance image %s size differs from file on disk" % image[0]
             result = 2
 
