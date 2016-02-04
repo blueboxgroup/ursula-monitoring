@@ -4,7 +4,8 @@
 #
 # DESCRIPTION:
 #   Runs http://serverspec.org/ spec tests against your servers.
-#   Fails with a critical if tests are failing.
+#   Fails with a warning or a critical if tests are failing, depending
+#     on the severity level set.
 #
 # OUTPUT:
 #   plain text
@@ -25,8 +26,12 @@
 #   Run only one set of tests
 #   check-serverspec -d /etc/my_tests_dir -t spec/test_one
 #
+#   Run with a warning severity level
+#   check-serverspec -d /etc/my_tests_dir -s warning
+#
 # NOTES:
 #   Does it behave differently on specific platforms, specific use cases, etc
+#   Critical severity level is set as the default 
 #
 # LICENSE:
 #   Copyright 2014 Sonian, Inc. and contributors. <support@sensuapp.org>
@@ -57,6 +62,11 @@ class CheckServerspec < Sensu::Plugin::Check::CLI
          short: '-l HANDLER',
          long: '--handler HANDLER',
          default: 'default'
+
+  option :severity,
+         short: '-s severity',
+         long: '--severity severity',
+         default: 'critical'
 
   def sensu_client_socket(msg)
     u = UDPSocket.new
@@ -102,10 +112,17 @@ class CheckServerspec < Sensu::Plugin::Check::CLI
     puts parsed['summary_line']
     failures = parsed['summary_line'].split[2]
     if failures != '0'
-      exit_with(
-        :critical,
-        parsed['summary_line']
-      )
+      if config[:severity] == 'warning'
+        exit_with(
+          :warning,
+          parsed['summary_line']
+        )
+      else
+        exit_with(
+          :critical,
+          parsed['summary_line']
+        )
+      end
     else
       exit_with(
         :ok,
@@ -118,11 +135,12 @@ class CheckServerspec < Sensu::Plugin::Check::CLI
     case sym
     when :ok
       ok message
+    when :warning
+      warning message
     when :critical
-      critical message
+      warning critical
     else
       unknown message
     end
   end
 end
-
