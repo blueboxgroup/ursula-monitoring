@@ -41,14 +41,15 @@ my %ERRORS = (
   'UNKNOWN' => 3
 );
 
-our($opt_h, $opt_b, $opt_e, $opt_s, $opt_o, $opt_m, $opt_p);
+our($opt_h, $opt_b, $opt_e, $opt_s, $opt_o, $opt_z, $opt_m, $opt_p);
 
 
-getopts('hb:es:o:p:m:');
+getopts('hb:es:o:z:p:m:');
 
 if ( $opt_h ) {
-	print "Usage: $0 [-s number] [-m number] [-o number]\n";
+	print "Usage: $0 [-s number] [-m number] [-o number] [-z criticality]\n";
 	print "       -b the megacli binary path to use\n";
+	print "       -z the criticality of this alert\n";
 	print "	      -e run megacli with sudo privileges";
 	print "       -s is how many hotspares are attached to the controller\n";
 	print "       -m is the number of media errors to ignore\n";
@@ -78,7 +79,7 @@ my $status = 'OK';
 sub max_state ($$) {
 	my ($current, $compare) = @_;
 
-	if (($compare eq 'CRITICAL') || ($current eq 'CRITICAL')) {
+	if (($compare eq 'CRITICAL') || ($current eq 'CRITICAL') && ($criticality eq 'critical')) {
 		return 'CRITICAL';
 	} elsif ($compare eq 'OK') {
 		return $current;
@@ -100,6 +101,9 @@ sub exitreport ($$) {
 
 if ( $opt_b ) {
         $megaclibin = $opt_b;
+}
+if ( $opt_z ) {
+        $criticality = $opt_z;
 }
 if ( $opt_e ) {
         $sudo = "sudo"

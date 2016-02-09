@@ -38,7 +38,7 @@ from optparse import OptionParser
 SRCDIR = os.path.dirname(sys.argv[0])
 
 
-def end(status, message, disks=False):
+def end(status, message, criticality, disks=False):
     """Exits the plugin with first arg as the return code and the second
     arg as the message to output"""
 
@@ -48,15 +48,16 @@ def end(status, message, disks=False):
     if status == OK:
         print "%s OK: %s" % (check, message)
         sys.exit(OK)
-    elif status == WARNING:
-        print "%s WARNING: %s" % (check, message)
-        sys.exit(WARNING)
-    elif status == CRITICAL:
-        print "%s CRITICAL: %s" % (check, message)
-        sys.exit(CRITICAL)
-    else:
+    elif status == UNKNOWN:
         print "UNKNOWN: %s" % message
         sys.exit(UNKNOWN)
+    elif (status == WARNING) or (criticality == "warning"):
+        print "%s WARNING: %s" % (check, message)
+        sys.exit(WARNING)
+    else:
+        print "%s CRITICAL: %s" % (check, message)
+        sys.exit(CRITICAL)
+
 
 
 if os.geteuid() != 0:
@@ -358,6 +359,15 @@ def main():
                        dest="binary",
                        help="Full path of the tw_cli binary to use.")
 
+    parser.add_option( "-z",
+                       "--criticality",
+                       action="store_true",
+                       default="critical",
+                       dest="criticality",
+                       help="Allow for criticality level to be overwritten. " \
+                          + "Options are warning and critical, with critical " \
+                          + "being the default level. ")
+
     parser.add_option( "-d",
                        "--drives-only",
                        action="store_true",
@@ -422,6 +432,7 @@ def main():
 
     arrays_only  = options.arrays_only
     binary       = options.binary
+    criticality  = options.criticality
     drives_only  = options.drives_only
     no_summary   = options.no_summary
     show_drives  = options.show_drives
@@ -449,6 +460,11 @@ def main():
         parser.print_help()
         sys.exit(UNKNOWN)
 
+    if (criticality != "warning") and (criticality != "critical"):
+        print "Criticality must be one of these options: warning, critical"
+        parser.print_help()
+        sys.exit(UNKNOWN)
+
     _set_twcli_binary(binary)
 
     if arrays_only:
@@ -459,7 +475,7 @@ def main():
     else:
         result, output = test_all(verbosity, warn_true, no_summary, show_drives)
 
-    end(result, output)
+    end(result, output, criticality)
 
 
 if __name__ == "__main__":
