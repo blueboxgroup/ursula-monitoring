@@ -126,6 +126,9 @@ sub displayUsage {
   print "  [ -p <path> | --path <path>]
     Specifies the path to StorCLI, per default uses the tool 'which' to get
     the StorCLI path.\n";
+  print "  [ -z <critciality> | --criticality <criticality>]
+    Specifies the criticality alert level for this check, the default is
+    critical for this alert.\n";
   print "  [ -b <0/1> | --BBU <0/1> ]
     Check if a BBU or a CacheVault module is present. One must be present unless
     '-b 0' is defined. This ensures that for a given controller a BBU/CV must be
@@ -1207,6 +1210,7 @@ MAIN: {
     'Is|ignore-shield-counter=i' => \$IGNERR_S,
     'Ib|ignore-bbm-counter=i' => \$IGNERR_B,
     'p|path=s' => \$storcli,
+    'z|criticality=s' => \$criticality,
     'b|BBU=i' => \$bbu,
     'noenclosures=i' => \$NOENCLOSURES,
     'nosudo' => \$noSudo,
@@ -1292,7 +1296,7 @@ MAIN: {
     $PDDevicesToCheck, $PDInitToCheck, $PDRebuildToCheck)
   }
   $exitCode = STATE_OK;
-  if(${$statusLevel_a[0]} eq "Critical"){
+  if(${$statusLevel_a[0]} eq "Critical" && !($criticality eq "warning")){
     $exitCode = STATE_CRITICAL;
   }
   if(${$statusLevel_a[0]} eq "Warning"){
