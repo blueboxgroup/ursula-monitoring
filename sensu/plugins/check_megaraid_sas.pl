@@ -59,6 +59,7 @@ if ( $opt_h ) {
 }
 
 my $sudo = '';
+my $criticality = '';
 my $megaclibin = '/usr/sbin/MegaCli';  # the full path to your MegaCli binary
 my $megapostopt = '-NoLog';            # additional options to call at the end of MegaCli arguments
 
