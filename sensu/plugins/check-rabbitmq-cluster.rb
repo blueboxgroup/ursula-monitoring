@@ -18,6 +18,20 @@ class CheckRabbitCluster < Sensu::Plugin::Check::CLI
           :long => '--expected NUMBER',
           :default => 2
 
+  option  :criticality,
+          :description => "Set sensu alert level, default is critical",
+          :short => '-z CRITICALITY',
+          :long => '--criticality CRITICALITY',
+          :default => 'critical'
+
+  def switch_on_criticality()
+    if config[:criticality] == 'warning'
+      warning
+    else
+      critical
+    end
+  end
+
   def run
     cmd = "/usr/sbin/rabbitmqctl -q cluster_status | awk '/disc/,/\},/' | awk '/@/ {++nodes} END {print nodes}' | grep #{config[:expected]}"
     system(cmd)
@@ -25,7 +39,7 @@ class CheckRabbitCluster < Sensu::Plugin::Check::CLI
     if $?.exitstatus == 0
       ok
     else
-      critical
+      switch_on_criticality()
     end
   end
 end

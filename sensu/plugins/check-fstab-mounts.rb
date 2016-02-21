@@ -23,6 +23,20 @@ class CheckFstabMounts < Sensu::Plugin::Check::CLI
     :proc => proc {|a| a.split(',')},
     :required => false
 
+  option :criticality,
+    :description => 'Set sensu alert level, default is critical',
+    :short => '-z CRITICALITY',
+    :long => '--criticality CRITICALITY',
+    :default => 'critical'
+
+  def switch_on_criticality(msg)
+    if config[:criticality] == 'warning'
+      warning msg
+    else
+      critical msg
+    end
+  end
+
   def initialize
     super
     @fstab = IO.readlines '/etc/fstab'
@@ -46,7 +60,7 @@ class CheckFstabMounts < Sensu::Plugin::Check::CLI
   def run
     check_mounts
     if @missing_mounts.any?
-      critical "Mountpoint(s) #{@missing_mounts.join(',')} not mounted!"
+      switch_on_criticality("Mountpoint(s) #{@missing_mounts.join(',')} not mounted!")
     else
       ok 'All mountpoints accounted for'
     end

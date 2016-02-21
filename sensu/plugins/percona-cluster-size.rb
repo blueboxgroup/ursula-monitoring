@@ -41,6 +41,20 @@ class CheckPerconaClusterSize < Sensu::Plugin::Check::CLI
          :short => '-d DEFAULTS_FILE',
          :long => '--defaults-file DEFAULTS_FILE'
 
+ option :criticality,
+        :description => "Set sensu alert level, default is critical",
+        :short => '-z CRITICALITY',
+        :long => '--criticality CRITICALITY',
+        :default => 'critical'
+
+  def switch_on_criticality(msg)
+    if config[:criticality] == 'warning'
+      warning msg
+    else
+      critical msg
+    end
+  end
+
   def run
     if config[:defaults_file]
       db_cluster_size = `mysql --defaults-file=#{config[:defaults_file]} -e "SHOW STATUS WHERE Variable_name like 'wsrep_cluster_size' AND Value >= #{config[:min_expected]};" | grep 'wsrep_cluster_size' | awk '{print $2}'`
@@ -48,7 +62,7 @@ class CheckPerconaClusterSize < Sensu::Plugin::Check::CLI
      db_cluster_size = `mysql -u #{config[:user]} -p#{config[:password]} -h #{config[:hostname]} -e "SHOW STATUS WHERE Variable_name like 'wsrep_cluster_size' AND Value >= #{config[:min_expected]};" | grep 'wsrep_cluster_size' | awk '{print $2}'`
     end
 
-   ok "Expected to find #{config[:min_expected]} or more nodes and found #{db_cluster_size}"    if db_cluster_size.to_i >= config[:min_expected].to_i
-   critical "Expected to find #{config[:min_expected]} or more nodes, found #{db_cluster_size}" if db_cluster_size.to_i < config[:min_expected].to_i
+   ok "Expected to find #{config[:min_expected]} or more nodes and found #{db_cluster_size}" if db_cluster_size.to_i >= config[:min_expected].to_i
+   switch_on_criticality("Expected to find #{config[:min_expected]} or more nodes, found #{db_cluster_size}") if db_cluster_size.to_i < config[:min_expected].to_i
   end
 end

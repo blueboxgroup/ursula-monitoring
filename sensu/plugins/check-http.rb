@@ -36,6 +36,15 @@ class CheckHTTP < Sensu::Plugin::Check::CLI
   option :timeout, :short => '-t SECS', :proc => proc { |a| a.to_i }, :default => 15
   option :redirectok, :short => '-r', :boolean => true, :default => false
   option :redirectto, :short => '-R URL'
+  option :criticality, :short => '-z CRITICALITY', :default => 'critical'
+
+  def switch_on_criticality(msg)
+    if config[:criticality] == 'warning'
+      warning msg
+    else
+      critical msg
+    end
+  end
 
   def run
     if config[:url]
@@ -56,11 +65,12 @@ class CheckHTTP < Sensu::Plugin::Check::CLI
         get_resource
       end
     rescue Timeout::Error
-      critical "Connection timed out"
+      switch_on_criticality("Connection timed out")
     rescue => e
-      critical "Connection error: #{e.message}"
+      switch_on_criticality("Connection error: #{e.message}")
     end
   end
+
 
   def get_resource
     http = Net::HTTP.new(config[:host], config[:port])
@@ -95,12 +105,12 @@ class CheckHTTP < Sensu::Plugin::Check::CLI
     case res.code
     when /^2/
       if config[:redirectto]
-        critical "expected redirect to #{config[:redirectto]} but got #{res.code}"
+        switch_on_criticality("expected redirect to #{config[:redirectto]} but got #{res.code}")
       elsif config[:pattern]
         if res.body =~ /#{config[:pattern]}/
           ok "#{res.code}, found /#{config[:pattern]}/ in #{res.body.size} bytes"
         else
-          critical "#{res.code}, did not find /#{config[:pattern]}/ in #{res.body.size} bytes: #{res.body[0...200]}..."
+          switch_on_criticality("#{res.code}, did not find /#{config[:pattern]}/ in #{res.body.size} bytes: #{res.body[0...200]}...")
         end
       else
         ok "#{res.code}, #{res.body.size} bytes"
@@ -113,14 +123,14 @@ class CheckHTTP < Sensu::Plugin::Check::CLI
           if config[:redirectto] == res['Location']
             ok "#{res.code} found redirect to #{res['Location']}"
           else
-            critical "expected redirect to #{config[:redirectto]} instead redirected to #{res['Location']}"
+            switch_on_criticality("expected redirect to #{config[:redirectto]} instead redirected to #{res['Location']}")
           end
         end
       else
         warning res.code
       end
     when /^4/, /^5/
-      critical res.code
+      switch_on_criticality(res.code)
     else
       warning res.code
     end

@@ -1,7 +1,20 @@
 #!/bin/bash
+
+while getopts 'z' OPT; do
+  case $OPT in
+    z)  CRITICALITY=$OPTARG;;
+  esac
+done
+
+CRITICALITY=${CRITICALITY:-critical}
+
 set -e
 if cinder-manage service list | tail -n +2 | grep XXX; then
   echo "a cinder service is down"
-  exit 2
+  if [ "$CRITICALITY" == "warning" ]; then
+    exit 1
+  else
+    exit 2
+  fi
 fi
 exit 0

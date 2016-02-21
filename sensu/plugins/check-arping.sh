@@ -4,12 +4,15 @@
 #   1. There are no replies.
 #   2. There is more than 1 MAC address in the replies.
 
-while getopts 'I:d:' OPT; do
+while getopts 'I:d:z:' OPT; do
   case "$OPT" in
     I) interface="$OPTARG";;
     d) destination="$OPTARG";;
+    z) CRITICALITY="$OPTARG";;
   esac
 done
+
+CRITICALITY=${CRITICALITY:-critical}
 
 if [[ -z "$interface" || -z "$destination" ]]; then
   echo "Usage: $0 -I device -d destination"
@@ -21,7 +24,11 @@ output=$(arping -b -c 2 -I $interface $destination)
 if [ $? -ne 0 ]; then
   echo "ERROR: No ARP replies for destination: $destination"
   echo "$output"
-  exit 2
+  if [ "$CRITICALITY" == "warning" ]; then
+    exit 1
+  else
+    exit 2
+  fi
 fi
 
 mac_address=$(echo "$output" | grep 'reply from' | awk '{ print $5 }' | sort | uniq)
@@ -37,9 +44,12 @@ status="Received replies from ${mac_address//$'\n'/,} for destination: $destinat
 if [ $num_address -ne 1 ]; then
   echo "ERROR: $status"
   echo "$output"
-  exit 2
+  if [ "$CRITICALITY" == "warning" ]; then
+    exit 1
+  else
+    exit 2
+  fi
 else
   echo "OK: $status"
   exit 0
 fi
-
