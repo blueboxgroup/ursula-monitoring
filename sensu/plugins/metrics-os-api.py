@@ -125,6 +125,7 @@ def request(metric_data, scheme, url, timestamp, method='GET', retries=2, **kwar
 
 def main():
     timestamp = int(time.time())
+    requests.packages.urllib3.disable_warnings()    
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-u', '--user', default=os.environ['OS_USERNAME'])
