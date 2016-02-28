@@ -21,6 +21,12 @@ def is_remote_image(image):
         return http_re.match(image.location)
     return False
 
+def switch_on_criticality():
+    if options.criticality == 'warning':
+        return 1
+    else:
+        return 2
+
 glance_auth = {
     'username':    os.environ['OS_USERNAME'],
     'password':    os.environ['OS_PASSWORD'],
@@ -34,6 +40,8 @@ argparser = argparse.ArgumentParser()
 argparser.add_argument('--imagedir', help='Glance file store image directory',
                     default='/var/lib/glance/images')
 argparser.add_argument('--debug', help='Enable API debugging', action='store_true')
+argparser.add_argument('--criticality', help='Set sensu alert level, critical is default',
+                       default='critical')
 options = argparser.parse_args()
 
 store_directory = options.imagedir
@@ -81,13 +89,13 @@ for image in [x for x in glance_images if x[2] < time_cutoff]:
     if not [x for x in files if x[0] == image[0]]:
         if image[3] == False:
             print "Glance image %s not found in %s" % (image[0], store_directory)
-            result = 2
+            result = switch_on_criticality()
 
 # Check all files have a corresponding glance image and ignore brand new / zero size files
 for image_file in files:
     if not [x for x in glance_images if x[0] == image_file[0]] and image_file[2] < alert_squelch and image_file[1] > 0:
         print "Unknown file %s found in %s" % (image_file[0], store_directory)
-        result = 2
+        result = switch_on_criticality()
 
 
 # Check glance image file sizes match files and ignore difference for squelch
@@ -95,7 +103,7 @@ for image in glance_images:
     for image_file in [x for x in files if x[0] == image[0]]:
         if image[1] != image_file[1] and image_file[2] < alert_squelch:
             print "Glance image %s size differs from file on disk" % image[0]
-            result = 2
+            result = switch_on_criticality()
 
 if result == 0:
     print "Glance image store %s looks good" % store_directory

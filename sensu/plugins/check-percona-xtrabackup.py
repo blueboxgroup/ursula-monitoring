@@ -18,6 +18,7 @@
 
 from __future__ import print_function
 
+import argparse
 import os
 import sys
 import datetime
@@ -34,6 +35,16 @@ CRITICAL_TIME = datetime.timedelta(days=3)
 
 LOG_PATH = '/backup/percona/percona-backup.last.log'
 
+argparser = argparse.ArgumentParser()
+argparser.add_argument('--criticality', help='Set sensu alert level, default is critical',
+                       default='critical')
+options = argparser.parse_args()
+
+def switch_on_criticality():
+    if options.criticality == 'warning':
+        sys.exit(WARNING)
+    else:
+        sys.exit(CRITICAL)
 
 def main():
     if not os.path.isfile(LOG_PATH):
@@ -52,7 +63,7 @@ def main():
     if int(exit_code) != 0:
         print('Critical: Last backup exited with status: %s' % exit_code,
               file=sys.stderr)
-        sys.exit(CRITICAL)
+        switch_on_criticality()
 
     try:
         parsed = datetime.datetime.fromtimestamp(float(timestamp))
@@ -64,7 +75,7 @@ def main():
     if now - parsed > CRITICAL_TIME:
         print('Critical: Last backup greater than 72 hours ago',
               file=sys.stderr)
-        sys.exit(CRITICAL)
+        switch_on_criticality()
     elif now - parsed > WARNING_TIME:
         print('Warning: Last backup greater than 24 hours ago',
               file=sys.stderr)

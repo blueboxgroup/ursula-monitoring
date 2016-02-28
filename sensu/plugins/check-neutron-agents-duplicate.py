@@ -12,15 +12,20 @@ import os
 import json
 import requests
 
-
 STATE_OK = 0
 STATE_WARNING = 1
 STATE_CRITICAL = 2
+CRITICALITY = 'critical'
 
 timeout = 30
 
-def request(url, method='GET', retries=2, **kwargs):
+def switch_on_criticality():
+    if CRITICALITY == 'warning':
+        sys.exit(STATE_WARNING)
+    else:
+        sys.exit(STATE_CRITICAL)
 
+def request(url, method='GET', retries=2, **kwargs):
     r = None
     try:
         for i in range(retries + 1):
@@ -34,9 +39,7 @@ def request(url, method='GET', retries=2, **kwargs):
 
     return r.json()
 
-
 def check_agents(agent_list):
-
     agent_dictionary = {}
 
     for agent in agent_list['agents']:
@@ -46,14 +49,12 @@ def check_agents(agent_list):
         if agent_type  in agent_dictionary :
             if host in agent_dictionary[agent_type] :
                 print("Duplicate agent: %s on host: %s" % (agent_type, host))
-                sys.exit(STATE_CRITICAL)
+                switch_on_criticality()
             else:
                 agent_dictionary[agent_type].add(host)
         else:
             agent_dictionary[agent_type] = set()
             agent_dictionary[agent_type].add(host)
-
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -61,8 +62,10 @@ def main():
     parser.add_argument('-p', '--password', default=os.environ['OS_PASSWORD'])
     parser.add_argument('-t', '--tenant', default=os.environ['OS_TENANT_NAME'])
     parser.add_argument('-a', '--auth-url', default=os.environ['OS_AUTH_URL'])
+    parser.add_argument('-z', '--criticality', default='critical')
     args = parser.parse_args()
 
+    CRITICALITY = args.criticality
     url = args.auth_url + '/tokens'
     headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
     data = json.dumps(
@@ -83,7 +86,7 @@ def main():
         token = access['token']['id']
 
     if not token:
-        sys.exit(STATE_CRITICAL)
+        switch_on_criticality()
 
     endpoints = {}
     for service in access['serviceCatalog']:

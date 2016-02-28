@@ -14,6 +14,10 @@ require 'sensu-plugin/check/cli'
 class CheckOSApi < Sensu::Plugin::Check::CLI
   option :service, :long  => '--service SERVICE_TYPE'
 
+  option :criticality,
+         :short => '-z CRITICALITY',
+         :long => '--criticality CRITICALITY',
+         :default => 'critical'
   ##
   # Build a command to execute, since this is passed directly
   # to Kernel#system.
@@ -38,6 +42,8 @@ class CheckOSApi < Sensu::Plugin::Check::CLI
 
     if $?.exitstatus == 0
       ok
+    elsif config[:criticality] == 'warning'
+      warning
     else
       critical
     end

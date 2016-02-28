@@ -13,10 +13,11 @@ This plugin shows the status of the external uCARP interface and the Neutron L3 
 OPTIONS:
    -h      Show this message
    -e      External interface
+   -z      Set sensu alert level, default is critical
 EOF
 }
 
-while getopts "he:" OPTION
+while getopts "he:z:" OPTION
   do
     case $OPTION in
       h)
@@ -26,6 +27,9 @@ while getopts "he:" OPTION
       e)
         EXT="$OPTARG"
         ;;
+      z)
+        CRITICALITY="$OPTARG"
+        ;;
       ?)
         usage
         exit 1
@@ -34,6 +38,7 @@ while getopts "he:" OPTION
 done
 
 EXTVIP=$(ifquery ${EXT} | awk '/^ucarp-vip:/ {print $2}')
+CRITICALITY=${CRITICALITY:-critical}
 
 if ip a | grep ${EXTVIP} >/dev/null; then
   EXTUCARP="owned"
@@ -45,12 +50,20 @@ fi
 
 if [ -n "$EXTUCARP" ] && [ -z "$L3" ]; then
   echo "uCARP interface is up, but $HOST does not own L3 router"
-  exit 2
+  if [ "$CRITICALITY" == "warning" ]; then
+    exit 1
+  else
+    exit 2
+  fi
 fi
 
 if [ -z "$EXTUCARP" ] && [ -n "$L3" ]; then
   echo "uCARP interface is down, but $HOST owns L3 router"
-  exit 2
+  if [ "$CRITICALITY" == "warning" ]; then
+    exit 1
+  else
+    exit 2
+  fi
 fi
 
 if [ -z "$EXTUCARP" ] && [ -z "$L3" ]; then

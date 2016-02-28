@@ -88,6 +88,12 @@ class CheckCephHealth < Sensu::Plugin::Check::CLI
          boolean: true,
          default: false
 
+   option :criticality,
+          description: 'Set criticality level, critical is default',
+          short: '-z criticality',
+          long: '--criticality criticality',
+          default: 'critical'
+
   def run_cmd(cmd)
     pipe, status = nil
     begin
@@ -107,14 +113,28 @@ class CheckCephHealth < Sensu::Plugin::Check::CLI
       rescue Errno::ESRCH, Errno::EPERM
         # Catch errors from trying to kill the timed-out process
         # We must do something here to stop travis complaining
-        critical 'Execution timed out'
+        if config[:criticality] == 'warning'
+          warning 'Execution timed out'
+        else
+          critical 'Execution timed out'
+        end
       ensure
-        critical 'Execution timed out'
+        if config[:criticality] == 'warning'
+          warning 'Execution timed out'
+        else
+          critical 'Execution timed out'
+        end
       end
     end
+
     output = pipe.read
-    critical "Command '#{cmd}' returned no output" if output.to_s == ''
-    critical output unless status == 0
+    if config[:criticality] == 'warning'
+      warning "Command '#{cmd}' returned no output" if output.to_s == ''
+      warning output unless status == 0
+    else
+      critical "Command '#{cmd}' returned no output" if output.to_s == ''
+      critical output unless status == 0
+    end
     output
   end
 
@@ -149,4 +169,3 @@ class CheckCephHealth < Sensu::Plugin::Check::CLI
     end
   end
 end
-

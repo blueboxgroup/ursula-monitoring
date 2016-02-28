@@ -29,6 +29,20 @@ class MemcachedStats < Sensu::Plugin::Check::CLI
          :proc        => proc { |p| p.to_i },
          :default     => 11211
 
+  option :criticality,
+         :short       => "-z CRITICALITY",
+         :long        => "--criticality CRITICALITY",
+         :description => "Set sensu alert level, default is critical",
+         :default     => "critical"
+
+  def switch_on_criticality(msg)
+    if config[:criticality] == 'warning'
+      warning msg
+    else
+      critical msg
+    end
+  end
+
   def run
     begin
       Timeout.timeout(30) do
@@ -41,7 +55,7 @@ class MemcachedStats < Sensu::Plugin::Check::CLI
     rescue Timeout::Error
       warning "timed out connecting to memcached on port #{config[:port]}"
     rescue
-      critical "Can't connect to port #{config[:port]}"
+      switch_on_criticality("Can't connect to port #{config[:port]}")
     else
       ok "memcached stats protocol responded in a timely fashion"
     end
