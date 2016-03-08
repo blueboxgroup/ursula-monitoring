@@ -41,6 +41,7 @@
 
 require 'json'
 require 'socket'
+require 'digest/sha1'
 require 'serverspec'
 require 'sensu-plugin/check/cli'
 
@@ -92,10 +93,9 @@ class CheckServerspec < Sensu::Plugin::Check::CLI
     serverspec_results = `cd #{config[:tests_dir]} ; /opt/sensu/embedded/bin/rspec #{config[:spec_tests]} --format json`
     parsed = JSON.parse(serverspec_results)
 
-    example_number = 0
     parsed['examples'].each do |serverspec_test|
-      example_number += 1
-      test_name = serverspec_test['file_path'].split('/')[-1] + '_' + example_number.to_s
+      example_uniq_has = Digest::SHA1.base64digest serverspec_test['full_description']
+      test_name = serverspec_test['file_path'].split('/')[-1] + '_' + example_uniq_hash
       output = serverspec_test['full_description'].gsub!(/\"/, '')
 
       if serverspec_test['status'] == 'passed'
