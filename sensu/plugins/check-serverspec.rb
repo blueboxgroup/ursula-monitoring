@@ -92,8 +92,10 @@ class CheckServerspec < Sensu::Plugin::Check::CLI
     serverspec_results = `cd #{config[:tests_dir]} ; /opt/sensu/embedded/bin/rspec #{config[:spec_tests]} --format json`
     parsed = JSON.parse(serverspec_results)
 
+    example_number = 0
     parsed['examples'].each do |serverspec_test|
-      test_name = serverspec_test['file_path'].split('/')[-1] + '_' + serverspec_test['line_number'].to_s
+      example_number += 1
+      test_name = serverspec_test['file_path'].split('/')[-1] + '_' + example_number.to_s
       output = serverspec_test['full_description'].gsub!(/\"/, '')
 
       if serverspec_test['status'] == 'passed'
