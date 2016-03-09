@@ -94,7 +94,7 @@ class CheckServerspec < Sensu::Plugin::Check::CLI
     parsed = JSON.parse(serverspec_results)
 
     parsed['examples'].each do |serverspec_test|
-      example_uniq_has = Digest::SHA1.base64digest serverspec_test['full_description']
+      example_uniq_hash = Digest::SHA1.hexdigest serverspec_test['full_description']
       test_name = serverspec_test['file_path'].split('/')[-1] + '_' + example_uniq_hash
       output = serverspec_test['full_description'].gsub!(/\"/, '')
 
