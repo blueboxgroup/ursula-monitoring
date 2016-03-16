@@ -39,7 +39,7 @@
 # Use the data with graphite's `nonNegativeDerivative()` function
 # to construct per-second graphs for your hosts.
 #
-# Loopback iface (`lo`) is ignored.
+# All ifaces not `eth` and `bond` are ignored by default.
 #
 # Compat
 # ------
@@ -73,6 +73,11 @@ class LinuxPacketMetrics < Sensu::Plugin::Metric::CLI::Graphite
          short: '-s SCHEME',
          long: '--scheme SCHEME',
          default: "#{Socket.gethostname}.net"
+  option :all,
+         description: 'Return results for all interfaces, not just eth and bond',
+         short: '-a',
+         long: '--all',
+         default: false
 
   def run
     timestamp = Time.now.to_i
@@ -80,7 +85,7 @@ class LinuxPacketMetrics < Sensu::Plugin::Metric::CLI::Graphite
     Dir.glob('/sys/class/net/*').each do |iface_path|
       next if File.file?(iface_path)
       iface = File.basename(iface_path)
-      next if iface == 'lo'
+      next if !config[:all] and !iface.include?('eth') and !iface.include?('bond')
 
       tx_pkts = File.open(iface_path + '/statistics/tx_packets').read.strip
       rx_pkts = File.open(iface_path + '/statistics/rx_packets').read.strip
