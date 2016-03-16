@@ -1,6 +1,6 @@
 #!/bin/bash
 
-while getopts 'z' OPT; do
+while getopts 'z:' OPT; do
   case $OPT in
     z)  CRITICALITY=$OPTARG;;
   esac
