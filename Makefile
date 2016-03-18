@@ -17,14 +17,16 @@ FPM_FLAGS := \
 		--url 'https://www.blueboxcloud.com/' \
 		--description 'Sensu plugins for ursula monitoring'
 
-all: build/$(NAME)-sensu_$(VERSION)-$(ITERATION)_$(ARCH).deb
+DEB := build/$(NAME)-sensu_$(VERSION)-$(ITERATION)_$(ARCH).deb
 
-build/$(NAME)-sensu_$(VERSION)-$(ITERATION)_$(ARCH).deb:
+all: $(DEB)
+
+$(DEB):
 	fpm -t deb $(FPM_FLAGS) -d sensu -n $(NAME)-sensu --deb-no-default-config-files \
 		sensu/plugins/=/etc/sensu/plugins
 
 upload: repo_env all
-	package_cloud upload $(PACKAGECLOUD_REPO)/ubuntu/trusty build/$(NAME)-sensu_$(VERSION)-$(ITERATION)_$(ARCH).deb
+	package_cloud upload $(PACKAGECLOUD_REPO)/ubuntu/trusty $(DEB)
 
 .PHONY: clean repo_env
 clean:
