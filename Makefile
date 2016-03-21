@@ -26,7 +26,7 @@ $(DEB):
 		sensu/plugins/=/etc/sensu/plugins
 
 upload: repo_env all
-	package_cloud upload $(PACKAGECLOUD_REPO)/ubuntu/trusty $(DEB)
+	package_cloud push $(PACKAGECLOUD_REPO)/ubuntu/trusty $(DEB)
 
 .PHONY: clean repo_env
 clean:
