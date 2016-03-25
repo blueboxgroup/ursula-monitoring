@@ -23,7 +23,7 @@ all: $(DEB)
 
 $(DEB):
 	fpm -t deb $(FPM_FLAGS) -d sensu -n $(NAME)-sensu --deb-no-default-config-files \
-		sensu/plugins/=/etc/sensu/plugins
+		sensu/plugins/=/opt/sensu/plugins
 
 upload: repo_env all
 	package_cloud push $(PACKAGECLOUD_REPO)/ubuntu/trusty $(DEB)
