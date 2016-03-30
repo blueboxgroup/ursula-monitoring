@@ -13,14 +13,11 @@ class MemoryGraphite < Sensu::Plugin::Metric::CLI::Graphite
 
   def run
     # Metrics borrowed from hoardd: https://github.com/coredump/hoardd
-
     mem = metrics_hash
-
     mem.each do |k, v|
       output "#{config[:scheme]}.#{k}", v
     end
-
-    ok
+    exit
   end
 
   def metrics_hash
@@ -34,13 +31,11 @@ class MemoryGraphite < Sensu::Plugin::Metric::CLI::Graphite
       mem['swapFree']  = line.split(/\s+/)[1].to_i * 1024 if line.match(/^SwapFree/)
       mem['dirty']     = line.split(/\s+/)[1].to_i * 1024 if line.match(/^Dirty/)
     end
-
     mem['swapUsed'] = mem['swapTotal'] - mem['swapFree']
     mem['used'] = mem['total'] - mem['free']
     mem['usedWOBuffersCaches'] = mem['used'] - (mem['buffers'] + mem['cached'])
     mem['freeWOBuffersCaches'] = mem['free'] + (mem['buffers'] + mem['cached'])
     mem['swapUsedPercentage'] = 100 * mem['swapUsed'] / mem['swapTotal'] if mem['swapTotal'] > 0
-
     mem
   end
 

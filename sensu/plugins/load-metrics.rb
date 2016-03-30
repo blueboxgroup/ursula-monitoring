@@ -27,17 +27,17 @@ class LoadStat < Sensu::Plugin::Metric::CLI::Graphite
     timestamp = Time.now.to_i
     metrics = {
       :load_avg => {
-         :one => result[0],
-         :five => result[1],
-         :fifteen => result[2]
-       }
+        :one => result[0],
+        :five => result[1],
+        :fifteen => result[2]
+      }
     }
     metrics.each do |parent, children|
       children.each do |child, value|
         output [config[:scheme], parent, child].join("."), value, timestamp
       end
     end
-    ok
+    exit
   end
 
 end

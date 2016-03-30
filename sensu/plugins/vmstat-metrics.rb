@@ -42,26 +42,26 @@ class VMStat < Sensu::Plugin::Metric::CLI::Graphite
       :procs => {
          :waiting => result[0],
          :uninterruptible => result[1]
-       },
-       :memory => {
+      },
+      :memory => {
          :swap_used => result[2],
          :free => result[3],
          :buffers => result[4],
          :cache => result[5]
-       },
-       :swap => {
+      },
+      :swap => {
          :in => result[6],
          :out => result[7]
-       },
-       :io => {
+      },
+      :io => {
          :received => result[8],
          :sent => result[9]
-       },
-       :system => {
+      },
+      :system => {
          :interrupts_per_second => result[10],
          :context_switches_per_second => result[11]
-       },
-       :cpu => {
+      },
+      :cpu => {
          :user => result[12],
          :system => result[13],
          :idle => result[14],
@@ -73,7 +73,7 @@ class VMStat < Sensu::Plugin::Metric::CLI::Graphite
         output [config[:scheme], parent, child].join("."), value, timestamp
       end
     end
-    ok
+    exit
   end
 
 end

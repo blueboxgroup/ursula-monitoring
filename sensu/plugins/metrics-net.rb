@@ -110,8 +110,7 @@ class LinuxPacketMetrics < Sensu::Plugin::Metric::CLI::Graphite
       output "#{config[:scheme]}.#{current_iface}.rx_errors", rx_errors, timestamp
       output "#{config[:scheme]}.#{current_iface}.tx_dropped", tx_dropped, timestamp
       output "#{config[:scheme]}.#{current_iface}.rx_dropped", rx_dropped, timestamp
-
     end
-    ok
+    exit
   end
 end
