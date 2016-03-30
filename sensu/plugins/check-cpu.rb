@@ -89,7 +89,7 @@ class CheckCPU < Sensu::Plugin::Check::CLI
         warning if checked_usage > config[:warn]
       end
     end
-    ok
+    exit
   end
 
   def process_in_white_list?(process)

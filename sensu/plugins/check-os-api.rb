@@ -41,7 +41,7 @@ class CheckOSApi < Sensu::Plugin::Check::CLI
     system("#{safe_command}")
 
     if $?.exitstatus == 0
-      ok
+      exit
     elsif config[:criticality] == 'warning'
       warning
     else

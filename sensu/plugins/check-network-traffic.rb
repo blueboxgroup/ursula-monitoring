@@ -57,7 +57,7 @@ class CheckNetworkStats < Sensu::Plugin::Check::CLI
       critical if txkB >= config[:crit] or txkB <= -config[:crit]
       critical if rxmcs >= config[:rxmcscrit] or rxmcs <= -config[:rxmcscrit]
 
-      ok
+      exit
     end
   end
 end

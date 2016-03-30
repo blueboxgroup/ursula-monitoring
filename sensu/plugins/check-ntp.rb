@@ -27,7 +27,7 @@ class CheckNTP < Sensu::Plugin::Check::CLI
 
     critical if offset >= config[:crit] or offset <= -config[:crit]
     warning if offset >= config[:warn] or offset <= -config[:warn]
-    ok
+    exit
 
   end
 end

@@ -48,7 +48,7 @@ class MemcachedGraphite < Sensu::Plugin::Metric::CLI::Graphite
       output "#{config[:scheme]}.#{k}", v
     end
 
-    ok
+    exit
   end
 
 end

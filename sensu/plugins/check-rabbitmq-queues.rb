@@ -91,6 +91,6 @@ class CheckRabbitCluster < Sensu::Plugin::Check::CLI
         warning "WARNING: #{msg}: #{queue_count}"
       end
     end
-    ok
+    exit
   end
 end
