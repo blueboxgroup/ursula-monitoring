@@ -117,7 +117,7 @@ class ESHeap < Sensu::Plugin::Check::CLI
       elsif heap_used_ratio >= config[:warn]
         warning
       else
-        ok
+        exit
       end
     else
       heap_used = acquire_heap_data(false)
@@ -127,7 +127,7 @@ class ESHeap < Sensu::Plugin::Check::CLI
       elsif heap_used >= config[:warn]
         warning
       else
-        ok
+        exit
       end
     end
   end

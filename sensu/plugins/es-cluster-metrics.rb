@@ -103,6 +103,6 @@ class ESClusterMetrics < Sensu::Plugin::Metric::CLI::Graphite
       end
       output(config[:scheme] + '.document_count', acquire_document_count)
     end
-    ok
+    exit
   end
 end

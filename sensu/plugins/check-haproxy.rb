@@ -110,7 +110,7 @@ class CheckHAProxy < Sensu::Plugin::Check::CLI
     if services.empty?
       message "No services matching /#{config[:service]}/"
       if config[:missing_ok]
-        ok
+        exit
       else
         warning
       end

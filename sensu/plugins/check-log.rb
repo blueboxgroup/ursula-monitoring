@@ -84,7 +84,7 @@ class CheckLog < Sensu::Plugin::Check::CLI
     elsif n_warns > 0
       warning
     else
-      ok
+      exit
     end
   end
 

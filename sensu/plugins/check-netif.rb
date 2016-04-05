@@ -70,6 +70,6 @@ class NetIFMetrics < Sensu::Plugin::Check::CLI
         end
       end
     end
-    ok
+    exit
   end
 end

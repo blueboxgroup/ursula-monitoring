@@ -233,6 +233,6 @@ class ESMetrics < Sensu::Plugin::Metric::CLI::Graphite
     metrics.each do |k, v|
       output([config[:scheme], k].join('.'), v, timestamp)
     end
-    ok
+    exit
   end
 end

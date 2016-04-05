@@ -37,7 +37,7 @@ class CheckRabbitCluster < Sensu::Plugin::Check::CLI
     system(cmd)
 
     if $?.exitstatus == 0
-      ok
+      exit
     else
       switch_on_criticality()
     end
