@@ -206,7 +206,7 @@ def main():
         '/v2.0/networks?tenant_id=%s' % tenant_id),
         'lbaas':('loadbalancers', 'neutron', '/v2.0/lbaas/loadbalancers'),
         'cinder':('cinder', 'cinderv2' , '/volumes/detail'),
-        'glance':('glance', 'glance' , '/v2/images?limit=1'),
+        'glance':('glance', 'glance' , '/healthcheck'),
         'heat':('heat', 'heat' , '/stacks'),
         'swift':('swift', 'swift' , '?format=json'),
         'ceilometer':('ceilometer', 'ceilometer' , '/v2/meters/cpu?limit=1'),
