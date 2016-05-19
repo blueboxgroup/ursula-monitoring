@@ -38,10 +38,10 @@ class CheckProcs < Sensu::Plugin::Check::CLI
     end
   end
 
-  option :warn_over, :short => '-w N', :proc => proc {|a| a.to_i }, :default => 1
-  option :crit_over, :short => '-c N', :proc => proc {|a| a.to_i }, :default => 1
-  option :warn_under, :short => '-W N', :proc => proc {|a| a.to_i }, :default => 0
-  option :crit_under, :short => '-C N', :proc => proc {|a| a.to_i }, :default => 0
+  option :warn_over, :short => '-w N', :proc => proc {|a| a.to_i }
+  option :crit_over, :short => '-c N', :proc => proc {|a| a.to_i }
+  option :warn_under, :short => '-W N', :proc => proc {|a| a.to_i }, :default => 1
+  option :crit_under, :short => '-C N', :proc => proc {|a| a.to_i }, :default => 1
   option :metric, :short => '-t METRIC', :proc => proc {|a| a.to_sym }
 
   option :match_self, :short => '-m', :boolean => true, :default => false
@@ -116,9 +116,13 @@ class CheckProcs < Sensu::Plugin::Check::CLI
       count = procs.size
     end
 
-    if count < config[:crit_under] || count > config[:crit_over]
+    if config[:crit_over] && count > config[:crit_over]
       critical msg
-    elsif count < config[:warn_under] || count > config[:warn_over]
+    elsif config[:crit_under] != 0 && count < config[:crit_under]
+      critical msg
+    elsif config[:warn_over] && count > config[:warn_over]
+      warning msg
+    elsif config[:warn_under] != 0 && count < config[:warn_under]
       warning msg
     else
       ok msg
