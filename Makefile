@@ -7,7 +7,7 @@ NAME := ursula-monitoring
 
 ARCH      := all
 VERSION   := $(shell (git describe --exact-match || git describe --abbrev=0) 2>/dev/null | sed 's/^v//')
-ITERATION := $(shell git describe --exact-match &>/dev/null && echo 1 || git describe | perl -pe's/^[^-]+-//;s/-/./')
+ITERATION := $(shell git describe --exact-match 2>/dev/null 1>/dev/null && echo 1 || git describe | perl -pe's/^[^-]+-//;s/-/./')
 FPM_FLAGS := \
 		-s dir -a $(ARCH) -p build \
 		-v $(VERSION) --iteration $(ITERATION) \
