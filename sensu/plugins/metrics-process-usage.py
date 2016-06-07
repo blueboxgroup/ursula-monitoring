@@ -11,7 +11,7 @@
 #
 # USAGE:
 #
-#  metrics-process-usage.py -n <process_name> -w <cpu_warning_pct> -c <cpu_critical_pct> -W <mem_warning_pct> -C <mem_critical_pct> [-s <graphite_scheme>]
+#  metrics-process-usage.py -n <process_name> -w <cpu_warning_pct> -c <cpu_critical_pct> -W <mem_warning_pct> -C <mem_critical_pct> [-s <graphite_scheme>] [-z <criticality>]
 #
 # DESCRIPTION:
 # Finds the pid[s] corresponding to a process name and obtains the necessary
@@ -26,7 +26,7 @@
 #
 # Siva Mullapudi <scmullap@us.ibm.com>
 
-import optparse
+import argparse
 import sys
 import os
 import time
@@ -36,8 +36,15 @@ from collections import Counter
 STATE_OK = 0
 STATE_WARNING = 1
 STATE_CRITICAL = 2
+CRITICALITY = 'critical'
 
 PROC_ROOT_DIR = '/proc/'
+
+def switch_on_criticality():
+    if CRITICALITY == 'warning':
+        sys.exit(STATE_WARNING)
+    else:
+        sys.exit(STATE_CRITICAL)
 
 def find_pids_from_name(process_name):
     '''Find process PID from name using /proc/<pids>/comm'''
@@ -57,7 +64,7 @@ def stats_per_pid(pid):
 
     stats = {}
     process_handler = psutil.Process(pid)
-    stats['cpu.percent'] = process_handler.cpu_percent()
+    stats['cpu.percent'] = process_handler.cpu_percent(interval=0.1)
     stats['memory.percent'] = process_handler.memory_percent()
 
     return stats
@@ -66,7 +73,7 @@ def multi_pid_process_stats(pids):
     stats = {'total_processes': len(pids)}
     for pid in pids:
         stats = Counter(stats) + Counter(stats_per_pid(pid))
-        return stats
+    return stats
 
 def graphite_printer(stats, graphite_scheme):
     now = time.time()
@@ -74,62 +81,34 @@ def graphite_printer(stats, graphite_scheme):
         print "%s.%s %s %d" % (graphite_scheme, stat, stats[stat], now)
 
 def main():
-    parser = optparse.OptionParser()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-n', '--process_name', required=True)
+    parser.add_argument('-w', '--cpu_warning_pct', required=True)
+    parser.add_argument('-c', '--cpu_critical_pct', required=True)
+    parser.add_argument('-W', '--memory_warning_pct', required=True)
+    parser.add_argument('-C', '--memory_critical_pct', required=True)
+    parser.add_argument('-s', '--scheme', required=True)
+    parser.add_argument('-z', '--criticality', default='critical')
+    args = parser.parse_args()
 
-    parser.add_option('-n', '--process-name',
-        help    = 'name of process to collect stats (imcompatible with -p)',
-        dest    = 'process_name',
-        metavar = 'PROCESS_NAME')
+    CRITICALITY = args.criticality
 
-    parser.add_option('-w', '--cpu_warning',
-        help    = 'cpu percent threshold to indicate a warning',
-        dest    = 'cpu_warning_pct',
-        metavar = 'CPU_WARNING_PERCENT')
-
-    parser.add_option('-c', '--cpu_critical',
-        help    = 'cpu percent threshold to indicate a critical situation',
-        dest    = 'cpu_critical_pct',
-        metavar = 'CPU_CRITICAL_PERCENT')
-
-    parser.add_option('-W', '--memory_warning',
-        help    = 'memory percent threshold to indicate a warning',
-        dest    = 'mem_warning_pct',
-        metavar = 'MEMORY_WARNING_PERCENT')
-
-    parser.add_option('-C', '--memory_critical',
-        help    = 'memorypercent threshold to indicate a critical situation',
-        dest    = 'mem_critical_pct',
-        metavar = 'MEMORY_CRITICAL_PERCENT')
-
-    parser.add_option('-s', '--scheme',
-        help    = 'graphite scheme to prepend, default to <process_stats>',
-        default = 'per_process_stats',
-        dest    = 'graphite_scheme',
-        metavar = 'GRAPHITE_SCHEME')
-
-    (options, args) = parser.parse_args()
-
-    pids = find_pids_from_name(options.process_name)
+    pids = find_pids_from_name(args.process_name)
 
     if not pids:
         print 'Cannot find pids for this process. Enter a valid process name.'
-        sys.exit(STATE_CRITICAL)
-
-    if not options.cpu_warning_pct or not options.cpu_critical_pct \
-       or not options.mem_warning_pct or not options.mem_critical_pct:
-        print 'Failed to specify a percentage limit.'
-        sys.exit(STATE_CRITICAL)
+        switch_on_criticality()
 
     total_process_stats = multi_pid_process_stats(pids)
-    graphite_printer(total_process_stats, options.graphite_scheme)
+    graphite_printer(total_process_stats, args.scheme)
 
-    if total_process_stats['cpu.percent'] > float(options.cpu_critical_pct) or \
-       total_process_stats['memory.percent'] > float(options.mem_critical_pct):
+    if total_process_stats['cpu.percent'] > float(args.cpu_critical_pct) or \
+       total_process_stats['memory.percent'] > float(args.memory_critical_pct):
        print 'CPU Usage and/or memory usage at critical levels!!!'
-       sys.exit(STATE_CRITICAL)
+       switch_on_criticality()
 
-    if total_process_stats['cpu.percent'] > float(options.cpu_warning_pct) or \
-       total_process_stats['memory.percent'] > float(options.mem_warning_pct):
+    if total_process_stats['cpu.percent'] > float(args.cpu_warning_pct) or \
+       total_process_stats['memory.percent'] > float(args.memory_warning_pct):
        print 'Warning: CPU Usage and/or memory usage exceeding normal levels!'
        sys.exit(STATE_WARNING)
 
