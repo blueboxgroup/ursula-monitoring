@@ -25,7 +25,8 @@ def exit_with_error_status(warning):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--interface', help='primary interface')
+    parser.add_argument('-d', '--devices', help='primary interface devices',
+                        required=True)
     parser.add_argument('-w', '--warning', action='store_true')
     args = parser.parse_args()
 
@@ -33,26 +34,19 @@ def main():
     if args.warning:
         crit_level = 'WARNING'
 
-    if args.interface is None:
-        parser.print_help()
-        exit_with_error_status(args.warning)
-
-    devices = re.findall('eth[0-7]', args.interface)
-
-    for eth in devices:
+    for eth in [s.strip() for s in args.devices.split(',')]:
         cmd = "ethtool -k %s | grep large-receive-offload | \
                grep ' off'" % (eth)
 
-        lro_check = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE)
-        stdout, stderr = lro_check.communicate()
-
-        if lro_check.returncode != 0:
+        try:
+            lro_check = subprocess.check_call(cmd, shell=True)
+        except subprocess.CalledProcessError as e:
+            print e.output
             print('%s: Device %s has large-receive-offload (LRO) enabled'
                   % (crit_level, eth))
             exit_with_error_status(args.warning)
-        else:
-            print('Device %s has large-receive-offload (LRO) disabled' % (eth))
+
+        print('Device %s has large-receive-offload (LRO) disabled' % (eth))
 
     sys.exit(STATE_OK)
 
