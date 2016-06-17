@@ -31,7 +31,6 @@ import sys
 import os
 import time
 import psutil
-from collections import Counter
 
 STATE_OK = 0
 STATE_WARNING = 1
@@ -59,20 +58,24 @@ def find_pids_from_name(process_name):
                 pids.append(int(pid))
     return pids
 
+def sum_dicts(dict1, dict2):
+    return dict(dict1.items() + dict2.items() +
+        [(k, dict1[k] + dict2[k]) for k in dict1.viewkeys() & dict2.viewkeys()])
+
 def stats_per_pid(pid):
     '''Gets process stats, cpu and memory usage in %, using the psutil module'''
 
     stats = {}
     process_handler = psutil.Process(pid)
-    stats['cpu.percent'] = process_handler.cpu_percent(interval=0.1)
-    stats['memory.percent'] = process_handler.memory_percent()
+    stats['cpu_percent'] = process_handler.cpu_percent(interval=0.1)
+    stats['memory_percent'] = process_handler.memory_percent()
 
     return stats
 
 def multi_pid_process_stats(pids):
-    stats = {'total_processes': len(pids)}
+    stats = {'cpu_percent': 0, 'memory_percent': 0}
     for pid in pids:
-        stats = Counter(stats) + Counter(stats_per_pid(pid))
+        stats = sum_dicts(stats, stats_per_pid(pid))
     return stats
 
 def graphite_printer(stats, graphite_scheme):
@@ -102,13 +105,13 @@ def main():
     total_process_stats = multi_pid_process_stats(pids)
     graphite_printer(total_process_stats, args.scheme)
 
-    if total_process_stats['cpu.percent'] > float(args.cpu_critical_pct) or \
-       total_process_stats['memory.percent'] > float(args.memory_critical_pct):
+    if total_process_stats['cpu_percent'] > float(args.cpu_critical_pct) or \
+       total_process_stats['memory_percent'] > float(args.memory_critical_pct):
        print 'CPU Usage and/or memory usage at critical levels!!!'
        switch_on_criticality()
 
-    if total_process_stats['cpu.percent'] > float(args.cpu_warning_pct) or \
-       total_process_stats['memory.percent'] > float(args.memory_warning_pct):
+    if total_process_stats['cpu_percent'] > float(args.cpu_warning_pct) or \
+       total_process_stats['memory_percent'] > float(args.memory_warning_pct):
        print 'Warning: CPU Usage and/or memory usage exceeding normal levels!'
        sys.exit(STATE_WARNING)
 

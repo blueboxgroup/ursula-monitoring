@@ -30,7 +30,6 @@ import sys
 import os
 import time
 import subprocess
-from collections import Counter
 
 STATE_OK = 0
 STATE_WARNING = 1
@@ -58,6 +57,10 @@ def search_output(output, token):
             matches = matches + line + "\n"
     return matches.rstrip("\n")
 
+def sum_dicts(dict1, dict2):
+    return dict(dict1.items() + dict2.items() +
+        [(k, dict1[k] + dict2[k]) for k in dict1.viewkeys() & dict2.viewkeys()])
+
 def queue_lengths_per_pid(pid):
     '''Gets network rx/tx queue lengths for a specific pid'''
 
@@ -74,9 +77,9 @@ def queue_lengths_per_pid(pid):
     return process_queues
 
 def multi_pid_queue_lengths(pids):
-    stats = {'total_processes': len(pids)}
+    stats = {'receive_queue_length': 0, 'send_queue_length': 0}
     for pid in pids:
-        stats = Counter(stats) + Counter(queue_lengths_per_pid(pid))
+        stats = sum_dicts(stats, queue_lengths_per_pid(pid))
     return stats
 
 def graphite_printer(stats, graphite_scheme):
