@@ -9,7 +9,8 @@ done
 CRITICALITY=${CRITICALITY:-critical}
 
 set -e
-if nova-manage service list | tail -n +2 | grep XXX; then
+source /etc/sensu/stackrc
+if nova service-list | tail -n +4 | grep -v '^+-' | cut -d'|' -f 3,7 | grep down; then
   echo "a nova service is down"
   if [ "$CRITICALITY" == "warning" ]; then
     exit 1
