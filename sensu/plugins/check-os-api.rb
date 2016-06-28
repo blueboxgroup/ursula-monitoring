@@ -29,7 +29,7 @@ class CheckOSApi < Sensu::Plugin::Check::CLI
     when "glance"
       "glance image-list"
     when "keystone"
-      "keystone endpoint-list"
+      "openstack endpoint list"
     when "heat"
       "heat stack-list"
     when "ceilometer"
