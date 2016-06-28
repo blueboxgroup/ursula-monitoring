@@ -18,6 +18,15 @@
 import os
 import sys
 
+from datetime import datetime
+
+from keystone.cmd import cli
+from keystone.common import environment
+from keystone import token
+from keystone.common import sql
+from keystone.token.persistence.backends.sql import TokenModel
+from keystone.token.persistence.backends.sql import Token
+
 possible_topdir = os.path.normpath(os.path.join(os.path.abspath(sys.argv[0]),
                                    os.pardir,
                                    os.pardir))
@@ -26,17 +35,8 @@ if os.path.exists(os.path.join(possible_topdir,
                                '__init__.py')):
     sys.path.insert(0, possible_topdir)
 
-from keystone import cli
-from keystone.common import environment
-from keystone import token
-from keystone.common import sql
-from oslo.utils import timeutils
+WATERMARK = 1000
 
-WATERMARK=1000
-
-# Monkeypatch the sql Token class to add a method
-from keystone.token.persistence.backends.sql import TokenModel
-from keystone.token.persistence.backends.sql import Token
 
 def monkeypatch_method(cls):
     def decorator(func):
@@ -44,22 +44,22 @@ def monkeypatch_method(cls):
         return func
     return decorator
 
+
 @monkeypatch_method(Token)
 def list_tokens(self):
-    session = sql.get_session()
-    with session.begin():
-        now = timeutils.utcnow()
+    now = datetime.utcnow()
+    with sql.session_for_read() as session:
         query = session.query(TokenModel)
-        query = query.filter(TokenModel.expires < now)
-        tokens = query.all()
-    if len(tokens) > WATERMARK:
-        print("Too many expired keystone tokens: %s" % len(tokens))
-        sys.exit(1)
+        tokens = query.filter(TokenModel.expires < now).count()
+        if tokens > WATERMARK:
+            print("expired tokens not being flushed."
+                  " current count: %s" % tokens)
+            sys.exit(1)
 
-# Create a class for listing the tokens and add it to the keystone-manage
-# command list
+
 class TokenList(cli.BaseApp):
-    """List tokens in the DB"""
+    """List tokens in the DB. This class is added to
+       keystone-manage at runtime, and provides 'token_list' """
 
     name = "token_list"
 
@@ -70,7 +70,7 @@ class TokenList(cli.BaseApp):
 
 cli.CMDS.append(TokenList)
 
-# Now do our thing
+
 if __name__ == '__main__':
     environment.use_stdlib()
 
