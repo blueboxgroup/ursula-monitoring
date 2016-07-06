@@ -40,7 +40,8 @@ def _get_local_active_instance_volumes():
     local_attached_vols = []
     nova = nova_client(version=2, **CREDS)
     search_opts = {
-        'all_tenants': True
+        'all_tenants': True,
+        'host': hostname,
     }
     for server in nova.servers.list(search_opts=search_opts):
         if getattr(server, "OS-EXT-STS:vm_state") != "active":
