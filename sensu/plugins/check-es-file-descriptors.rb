@@ -74,8 +74,7 @@ class ESClusterStatus < Sensu::Plugin::Check::CLI
     warning 'Connection timed out'
   end
 
-  def acquire_open_fds
-    stats = get_es_resource('/_nodes/_local/stats?process=true')
+  def acquire_open_fds(stats)
     begin
       keys = stats['nodes'].keys
       stats['nodes'][keys[0]]['process']['open_file_descriptors'].to_i
@@ -84,19 +83,20 @@ class ESClusterStatus < Sensu::Plugin::Check::CLI
     end
   end
 
-  def acquire_max_fds
-    info = get_es_resource('/_nodes/_local?process=true')
+  def acquire_max_fds(stats)
     begin
-      keys = info['nodes'].keys
-      info['nodes'][keys[0]]['process']['max_file_descriptors'].to_i
+      keys = stats['nodes'].keys
+      stats['nodes'][keys[0]]['process']['max_file_descriptors'].to_i
     rescue NoMethodError
       warning 'Failed to retrieve max_file_descriptors'
     end
   end
 
   def run
-    open = acquire_open_fds
-    max = acquire_max_fds
+    es_stats = get_es_resource('/_nodes/_local/stats?process=true')
+
+    open = acquire_open_fds es_stats
+    max = acquire_max_fds es_stats
     used_percent = ((open.to_f / max.to_f) * 100).to_i
 
     if used_percent >= config[:critical]
