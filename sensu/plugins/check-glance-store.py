@@ -16,10 +16,11 @@ from iso8601 import iso8601
 from keystoneclient.v2_0 import client as ksclient
 
 def is_remote_image(image):
-    if image.get('location'):
-        http_re = re.compile(r'^(http|https|ftp)://')
-        return http_re.match(image.location)
-    return False
+    http_re = re.compile(r'^(file)://')
+    for location in image.get('locations', []):
+        if http_re.match(location.get('url')):
+            return False
+    return True
 
 def switch_on_criticality():
     if options.criticality == 'warning':
