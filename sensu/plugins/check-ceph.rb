@@ -163,9 +163,15 @@ class CheckCephHealth < Sensu::Plugin::Check::CLI
     result = run_cmd('ceph health detail') if config[:show_detail]
     result += run_cmd('ceph osd tree') if config[:osd_tree]
     if result.start_with?('HEALTH_WARN')
-      warning result
+       if result.include?('near full osd')
+          if config[:criticality] == 'warning'
+             warning result
+          else
+             critical result
+          end
+       end
     else
-      critical result
+       critical result
     end
   end
 end
