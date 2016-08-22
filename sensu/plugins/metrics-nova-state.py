@@ -27,7 +27,7 @@ def main():
                     project_id=args.tenant, auth_url=args.auth_url,
                     service_type=args.service_type)
 
-    servers = client.servers.list()
+    servers = client.servers.list(search_opts={ 'all_tenants': True })
 
     # http://docs.openstack.org/api/openstack-compute/2/content/List_Servers-d1e2078.html
     states = {
