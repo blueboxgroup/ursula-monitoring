@@ -39,7 +39,7 @@ class CheckRabbitCluster < Sensu::Plugin::Check::CLI
           :description => "timeout in seconds when querying rabbit",
           :short => '-m SECONDS',
           :long => '--timeout SECONDS',
-          :default => 1
+          :default => 3
 
   def set_defaults
     if config[:type] == 'length'
