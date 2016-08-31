@@ -27,9 +27,17 @@
 #   normally considered Ceph warnings to be overlooked and considered
 #   as 'OK' (e.g. noscrub,nodeep-scrub).
 #
-#   Using -d (--detailed) and/or -o (--osd-tree) will dramatically increase
+#   Using -d (--detailed) and/or -o (--osd-tree) and/or -f (--osd-df) 
+#   and/or -p (--osd-perf) will dramatically increase
 #   verboseness during warning/error reports, however they may add
 #   additional insights to cluster-related problems during notification.
+#
+#   Using -e (--escalate_flags) option allows specific options that are
+#   normally consdiered Ceph warning to be escalated and considered as
+#   'ERR' (e.g. osds are down,near full osd,clock skew,mons down)
+#
+#   Using -z (--criticality) option to change criticality level. 
+#   if criticality is warning, all Critical change to be Warning.
 #
 # LICENSE:
 #   Copyright 2013 Brian Clark <brian.clark@cloudapt.com>
@@ -74,6 +82,12 @@ class CheckCephHealth < Sensu::Plugin::Check::CLI
          long: '--ignore-flags',
          proc: proc { |f| f.split(',') }
 
+  option :escalate_flags,
+         description: 'Optional ceph warning flags to critical',
+         short: '-e FLAG[,FLAG]',
+         long: '--escalate-flags',
+         proc: proc { |f| f.split(',') }
+
   option :show_detail,
          description: 'Show ceph health detail on warns/errors (verbose!)',
          short: '-d',
@@ -88,6 +102,20 @@ class CheckCephHealth < Sensu::Plugin::Check::CLI
          boolean: true,
          default: false
 
+  option :osd_df,
+         description: 'Show OSD utilization (verbose!)',
+         short: '-f',
+         long: '--osd-df',
+         boolean: true,
+         default: false
+		 
+  option :osd_perf,
+         description: 'Show OSD performance (verbose!)',
+         short: '-p',
+         long: '--osd-perf',
+         boolean: true,
+         default: false
+		 
    option :criticality,
           description: 'Set criticality level, critical is default',
           short: '-z criticality',
@@ -153,25 +181,36 @@ class CheckCephHealth < Sensu::Plugin::Check::CLI
     end
   end
 
+  def check_ceph_health
+    if config[:show_detail]
+      run_cmd('ceph health detail')
+    else
+      run_cmd('ceph health')
+    end
+  end
+
   def run
-    result = run_cmd('ceph health')
+    result = check_ceph_health
     unless result.start_with?('HEALTH_OK')
       result = strip_warns(result) if config[:ignore_flags]
     end
     ok result if result.start_with?('HEALTH_OK')
 
-    result = run_cmd('ceph health detail') if config[:show_detail]
-    result += run_cmd('ceph osd tree') if config[:osd_tree]
-    if result.start_with?('HEALTH_WARN')
-       if result.include?('near full osd')
-          if config[:criticality] == 'warning'
-             warning result
-          else
-             critical result
-          end
-       end
-    else
-       critical result
+    result += run_cmd('ceph osd tree') if config[:osd_tree] and result.include?('osds are down')
+    result += run_cmd('ceph osd df') if config[:osd_df] and result.include?('full osd')
+    result += run_cmd('ceph osd perf') if config[:osd_perf] and result.include?('requests are blocked')
+
+    warning result if config[:criticality] == 'warning'
+    critical result if result.start_with?('HEALTH_ERR')
+	
+    # set config[:escalate_flags] default as 'near full osd' if no escalate_flags options provided.
+    config[:escalate_flags]=['near full osd','osds are down','clock skew','mons down'] unless config[:escalate_flags]
+    # escalate optional warning to critical
+    config[:escalate_flags].each do |p|
+      critical result if result.include?(p)
     end
+	
+    warning result
+	
   end
 end
