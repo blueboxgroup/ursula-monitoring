@@ -41,7 +41,7 @@ def main():
         try:
             lro_check = subprocess.check_call(cmd, shell=True)
         except subprocess.CalledProcessError as e:
-            print e.output
+            print(e.output)
             print('%s: Device %s has large-receive-offload (LRO) enabled'
                   % (crit_level, eth))
             exit_with_error_status(args.warning)
