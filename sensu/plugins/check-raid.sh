@@ -16,4 +16,6 @@ elif lspci | grep RAID | grep -i "MegaRAID" >> /dev/null; then
     else
       sudo check_megaraid_sas.pl -b /usr/sbin/megacli -o 63 -z $CRITICALITY
     fi
+elif lspci | grep RAID | grep -i "Adaptec" >> /dev/null; then
+    sudo check_adaptec_raid.py -z $CRITICALITY
 fi;
