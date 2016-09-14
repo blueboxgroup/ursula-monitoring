@@ -42,7 +42,7 @@ def exit_with_status(status, criticality):
     else:
         return_text = criticality
         return_status = RETURN_STATUS[criticality]
-    print "Check status: %s" % return_text
+    print("Check status: %s" % return_text)
     sys.exit(return_status)
 
 
@@ -52,7 +52,7 @@ def arcconf_exists(path):
 
 def check_adaptec_status(args):
     if not arcconf_exists(args.arcconf_path):
-        print "arcconf utility no present at %s" % args.arcconf_path
+        print("arcconf utility no present at %s" % args.arcconf_path)
         exit_with_status(WARNING, args.criticality)
 
     check_commands = (
@@ -67,10 +67,15 @@ def check_adaptec_status(args):
          "0", "Physical device SMART warnings", WARNING)
     )
 
+    statuses = []
     for command in check_commands:
         status = _run_command(args, *command)
-        if status != SUCCESS:
-            exit_with_status(status, args.criticality)
+        statuses.append(status)
+
+    if CRITICAL in statuses:
+        exit_with_status(CRITICAL, args.criticality)
+    elif WARNING in statuses:
+        exit_with_status(WARNING, args.criticality)
     exit_with_status(SUCCESS, args.criticality)
 
 
@@ -90,12 +95,12 @@ def _run_command(args, command, regex, expected, hint, failed_status=CRITICAL):
                 failed = True
 
     if not found:
-        print "Failed to determine RAID status " \
-              "with command: '%s'" % " ".join(cmd)
+        print("Failed to determine RAID status "
+              "with command: '%s'" % " ".join(cmd))
         return WARNING
     if failed:
-        print "Failed RAID check: %s" % hint
-        print "Failed command: '%s'" % " ".join(cmd)
+        print("Failed RAID check: %s" % hint)
+        print("Failed command: '%s'" % " ".join(cmd))
         return failed_status
     return SUCCESS
 
@@ -120,7 +125,7 @@ def main():
     try:
         check_adaptec_status(args)
     except Exception as e:
-        print "Failed to check RAID status: %s" % e
+        print("Failed to check RAID status: %s" % e)
         exit_with_status(CRITICAL, args.criticality)
     exit_with_status(SUCCESS, args.criticality)
 
