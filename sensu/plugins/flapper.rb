@@ -15,7 +15,21 @@ class Flapper < Sensu::Plugin::Check::CLI
     :in => [1, 2, 3, 5, 10, 15],
     :default => 1
 
+  option  :criticality,
+          :description => "Set sensu alert level, default is critical",
+          :short => '-z CRITICALITY',
+          :long => '--criticality CRITICALITY',
+          :default => 'critical'
+
+  def switch_on_criticality
+    if config[:criticality] == 'warning'
+      warning
+    else
+      critical
+    end
+  end
+
   def run
-    (Time.now.min / config[:duration] % 2) == 0 ? critical : ok
+    (Time.now.min / config[:duration] % 2) == 0 ? switch_on_criticality : ok
   end
 end
