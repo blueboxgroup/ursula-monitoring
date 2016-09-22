@@ -4,7 +4,7 @@
 #
 
 # get arguments
-while getopts 'l:i:p:v:th' OPT; do
+while getopts 'l:i:p:v:t:h' OPT; do
   case $OPT in
     l)  LEVEL=$OPTARG;;
     h)  hlp="yes";;
