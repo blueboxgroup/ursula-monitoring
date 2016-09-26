@@ -5,6 +5,7 @@
 # return CRITICAL if any duplicate agent on same host found
 #
 # Jose L Coello Enriquez <jlcoello@us.ibm.com>
+# Dean Daskalantonakis <ddaskal@us.ibm.com>
 
 import argparse
 import sys
@@ -19,11 +20,13 @@ CRITICALITY = 'critical'
 
 timeout = 30
 
+
 def switch_on_criticality():
     if CRITICALITY == 'warning':
         sys.exit(STATE_WARNING)
     else:
         sys.exit(STATE_CRITICAL)
+
 
 def request(url, method='GET', retries=2, **kwargs):
     r = None
@@ -39,6 +42,7 @@ def request(url, method='GET', retries=2, **kwargs):
 
     return r.json()
 
+
 def check_agents(agent_list):
     agent_dictionary = {}
 
@@ -46,8 +50,8 @@ def check_agents(agent_list):
         agent_type = agent['agent_type']
         host = agent['host'].split('.')[0]
 
-        if agent_type  in agent_dictionary :
-            if host in agent_dictionary[agent_type] :
+        if agent_type in agent_dictionary:
+            if host in agent_dictionary[agent_type]:
                 print("Duplicate agent: %s on host: %s" % (agent_type, host))
                 switch_on_criticality()
             else:
@@ -55,6 +59,7 @@ def check_agents(agent_list):
         else:
             agent_dictionary[agent_type] = set()
             agent_dictionary[agent_type].add(host)
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -67,7 +72,8 @@ def main():
 
     CRITICALITY = args.criticality
     url = args.auth_url + '/tokens'
-    headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
+    headers = {'Accept': 'application/json',
+               'Content-Type': 'application/json'}
     data = json.dumps(
         {
             'auth': {
@@ -97,12 +103,12 @@ def main():
                'X-Auth-Token': token}
 
     endpoint = endpoints['neutron'] + '/v2.0/agents.json'
-    agent_list = request(endpoint, headers=headers )
-    if not agent_list :
+    agent_list = request(endpoint, headers=headers)
+    if not agent_list:
         print("API call failed")
         sys.exit(STATE_WARNING)
     check_agents(agent_list)
-    print("No duplicate neutron agaents")
+    print("No duplicate neutron agents")
     sys.exit(STATE_OK)
 
 if __name__ == "__main__":
