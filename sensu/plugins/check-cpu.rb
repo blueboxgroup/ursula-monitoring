@@ -99,7 +99,7 @@ class CheckCPU < Sensu::Plugin::Check::CLI
   end
 
   def get_top_process_by_cpu_mem
-    `ps axo pcpu,pmem,cmd k pmem,pcpu | tail -n 1`.chomp
+    `ps axo pcpu,pmem,cmd k pcpu,pmem | tail -n 1`.chomp
   end
 
 end
