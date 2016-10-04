@@ -14,7 +14,6 @@ import sys
 
 STATE_OK = 0
 STATE_CRITICAL = 2
-BACKUP = 1
 
 
 def main():
@@ -46,21 +45,10 @@ def main():
                 status via SNMP')
         sys.exit(STATE_CRITICAL)
 
-    cmd = "snmpget -u sensu -A %s -a md5 -l authNoPriv %s \
-           1.3.6.1.4.1.9586.100.5.2.1.1.3.1" % (args.password, args.ip)
-    try:
-        vrrp_state = int(subprocess.check_output(cmd, shell=True).split
-                                                ("INTEGER: ")[1].rstrip())
-    except subprocess.CalledProcessError as e:
-        print(e.output)
-        print('CRITICAL: Failed to retrieve Vyatta VRRP state via SNMP')
-        sys.exit(STATE_CRITICAL)
-
     for index, device in enumerate(device_list):
         if "bond" in str(device):
             if "bond0v1" in str(device) or "bond1v1" in str(device):
-                if vrrp_state == BACKUP:
-                    continue
+                continue
             status += "Device: %s " % device.split("STRING: ")[1].rstrip()
             status += "%s\n" % device_status[index].split("INTEGER: ")[1]
 
