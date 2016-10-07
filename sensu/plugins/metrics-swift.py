@@ -114,11 +114,10 @@ class SwiftMetrics(object):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    mutex = parser.add_mutually_exclusive_group()
+    mutex = parser.add_mutually_exclusive_group(required=True)
     mutex.add_argument(
         '--interface',
         metavar='bond0',
-        default='bond0',
         help='Interface from which to get IP address'
     )
     mutex.add_argument('--ip-addr', help='Specific IP to use')
@@ -132,14 +131,10 @@ def parse_args():
 
 
 def process_args(args):
-    if args.interface:
-        ip = get_ip_address(args.interface)
-    else:
-        if not args.ip_addr:
-            print('Either --ip-addr or --interface is required. Please supply '
-                  'the appropriate arguments', file=sys.stderr)
-            sys.exit(CRITICAL)
+    if args.ip_addr:
         ip = args.ip_addr
+    else:
+        ip = get_ip_address(args.interface)
     return ip, args.port
 
 
