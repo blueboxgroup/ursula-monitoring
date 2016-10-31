@@ -55,7 +55,32 @@ def main():
 
     mem_avail_str = snmp_output.split("INTEGER: ")[1]
     mem_avail = float(mem_avail_str.split(" ")[0].rstrip())
-    mem_usage = 100*((mem_total - mem_avail) / mem_total)
+
+    cmd = "snmpget -u sensu -A %s -a md5 -l authNoPriv %s \
+           1.3.6.1.4.1.2021.4.14.0" % (args.password, args.ip)
+    try:
+        snmp_output = subprocess.check_output(cmd, shell=True)
+    except subprocess.CalledProcessError as e:
+        print(e.output)
+        print('CRITICAL: Failed to retrieve Vyatta memory usage via SNMP')
+        sys.exit(STATE_CRITICAL)
+
+    mem_buffer_str = snmp_output.split("INTEGER: ")[1]
+    mem_buffer = float(mem_buffer_str.split(" ")[0].rstrip())
+
+    cmd = "snmpget -u sensu -A %s -a md5 -l authNoPriv %s \
+           1.3.6.1.4.1.2021.4.15.0" % (args.password, args.ip)
+    try:
+        snmp_output = subprocess.check_output(cmd, shell=True)
+    except subprocess.CalledProcessError as e:
+        print(e.output)
+        print('CRITICAL: Failed to retrieve Vyatta memory usage via SNMP')
+        sys.exit(STATE_CRITICAL)
+
+    mem_cache_str = snmp_output.split("INTEGER: ")[1]
+    mem_cache = float(mem_cache_str.split(" ")[0].rstrip())
+    mem_usage = 100*((mem_total -
+                     (mem_avail + mem_buffer + mem_cache)) / mem_total)
 
     if mem_usage > args.critical:
         print("CRITICAL: Vyatta Memory usage: %d%%" % mem_usage)
