@@ -30,7 +30,7 @@ RETURN_STATUS = {
     WARNING: 2,
 }
 DEFAULT_FAILED_RETURN = CRITICAL
-DEFAULT_ARCCONF_PATH = '/bin/arcconf'
+DEFAULT_ARCCONF_PATH = '/usr/Adaptec_Event_Monitor/arcconf'
 
 
 def exit_with_status(status, criticality):
