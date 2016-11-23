@@ -17,6 +17,7 @@
 
 import os
 import sys
+import argparse
 
 from datetime import datetime
 
@@ -35,9 +36,6 @@ if os.path.exists(os.path.join(possible_topdir,
                                '__init__.py')):
     sys.path.insert(0, possible_topdir)
 
-WATERMARK = 1000
-
-
 def monkeypatch_method(cls):
     def decorator(func):
         setattr(cls, func.__name__, func)
@@ -51,8 +49,13 @@ def list_tokens(self):
     with sql.session_for_read() as session:
         query = session.query(TokenModel)
         tokens = query.filter(TokenModel.expires < now).count()
-        if tokens > WATERMARK:
-            print("expired tokens not being flushed."
+        
+        if tokens > watermark_critical:
+            print("CRITICAL: expired tokens not being flushed."
+                  " current count: %s" % tokens)
+            sys.exit(2)
+        elif tokens > watermark_warning:
+            print("WARNING: expired tokens not being flushed."
                   " current count: %s" % tokens)
             sys.exit(1)
 
@@ -80,7 +83,16 @@ if __name__ == '__main__':
     config_files = None
     if os.path.exists(dev_conf):
         config_files = [dev_conf]
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--critical', type=int, default=1000, 
+	                    help='Critical value', action='store')
+    parser.add_argument('-w', '--warning', type=int, default=10000, 
+	                    help='Warning value', action='store')
+    args = vars(parser.parse_args())
+	
+    watermark_warning = args['warning']
+    watermark_critical = args['critical']
 
     # keystone-manage wants a command as a argv, so give it token_list
-    sys.argv.append('token_list')
-    cli.main(argv=sys.argv, config_files=config_files)
+    cli.main(argv=[sys.argv[0],'token_list'], config_files=config_files)
