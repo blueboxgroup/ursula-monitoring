@@ -25,7 +25,12 @@ fi
 
 CRIT=${CRIT:=1}
 
-NO_NBD=`ps h $(pgrep qemu-nbd) | awk '{ print $(NF) }' | uniq -d | wc -l`
+PID_COUNT=`pgrep qemu-nbd | wc -l`
+NO_NBD=0
+
+if (( $PID_COUNT >= 1 )); then
+  NO_NBD=`ps h $(pgrep qemu-nbd) | awk '{ print $(NF) }' | uniq -d | wc -l`
+fi
 
 output="$NO_NBD files open by multiple /dev/nbdX"
 

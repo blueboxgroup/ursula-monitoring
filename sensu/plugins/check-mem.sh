@@ -10,6 +10,9 @@
 # The memory check is done with following command line:
 # free -m | grep buffers/cache | awk '{ print $4 }'
 
+# set lang
+LANG=C
+
 # get arguments
 
 # #RED
@@ -26,7 +29,6 @@ done
 # usage
 HELP="
     usage: $0 [ -w value -c value -p -h ]
-
         -w --> Warning MB < value
         -c --> Critical MB < value
         -p --> print out performance data
@@ -41,7 +43,11 @@ fi
 WARN=${WARN:=0}
 CRIT=${CRIT:=0}
 
-FREE_MEMORY=`free -m | grep buffers/cache | awk '{ print $4 }'`
+set -o pipefail
+FREE_MEMORY=$(free -m | grep buffers/cache | awk '{ print $4 }')
+if [ $? -ne 0 ]; then
+  FREE_MEMORY=$(free -m | grep Mem | awk '{ print $7 }')
+fi
 
 if [ "$FREE_MEMORY" = "" ]; then
   echo "MEM UNKNOWN -"

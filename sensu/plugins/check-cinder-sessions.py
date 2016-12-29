@@ -19,16 +19,7 @@ import os
 import subprocess
 import sys
 
-from novaclient.client import Client as nova_client
-
-CREDS = {
-    'username': os.environ['OS_USERNAME'],
-    'api_key': os.environ['OS_PASSWORD'],
-    'project_id': os.environ['OS_TENANT_NAME'],
-    'auth_url': os.environ['OS_AUTH_URL'],
-    'region_name': 'RegionOne',
-}
-
+import shade
 
 def _get_hostname():
     return subprocess.check_output(['hostname', '-f']).strip()
@@ -38,7 +29,7 @@ def _get_local_active_instance_volumes():
     hostname = _get_hostname()
 
     local_attached_vols = []
-    nova = nova_client(version=2, **CREDS)
+    nova = shade.openstack_cloud().nova_client
     search_opts = {
         'all_tenants': True,
         'host': hostname,

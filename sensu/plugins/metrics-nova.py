@@ -11,7 +11,7 @@ import socket
 import time
 import os
 
-from novaclient.client import Client
+import shade
 
 DEFAULT_SCHEME = '{}.nova.hypervisors'.format(socket.gethostname())
 
@@ -32,25 +32,16 @@ def output_metric(name, value):
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('-u', '--user', default=os.environ['OS_USERNAME'])
-    parser.add_argument('-p', '--password', default=os.environ['OS_PASSWORD'])
-    parser.add_argument('-t', '--tenant', default=os.environ['OS_TENANT_NAME'])
-    parser.add_argument('-a', '--auth-url', default=os.environ['OS_AUTH_URL'])
-    parser.add_argument('-S', '--service-type', default='compute')
     parser.add_argument('-H', '--host')
     parser.add_argument('-s', '--scheme', default=DEFAULT_SCHEME)
     args = parser.parse_args()
 
-    args.user
-
-    client = Client(version=2, username=args.user, api_key=args.password,
-                    project_id=args.tenant, auth_url=args.auth_url,
-                    service_type=args.service_type)
-
+    cloud = shade.openstack_cloud()
+	
     if args.host:
-        hypervisors = client.hypervisors.search(args.host)
+        hypervisors = cloud.nova_client.hypervisors.search(args.host)
     else:
-        hypervisors = client.hypervisors.list()
+        hypervisors = cloud.nova_client.hypervisors.list()
 
     for hv in hypervisors:
         hostname = hv.hypervisor_hostname.split('.')[0]
