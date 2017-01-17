@@ -200,7 +200,7 @@ def main():
                'X-Auth-Token': token}
 
     urls = {
-        'keystone':('keystone', 'keystone' , '/tenants'),
+        'keystone':('keystone', 'keystone' , '/v2.0/tenants'),
         'nova':('nova', 'nova' , '/servers/detail'),
         'neutron':('neutron', 'neutron' ,
         '/v2.0/networks?tenant_id=%s' % tenant_id),

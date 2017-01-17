@@ -22,7 +22,6 @@ import argparse
 from datetime import datetime
 
 from keystone.cmd import cli
-from keystone.common import environment
 from keystone import token
 from keystone.common import sql
 from keystone.token.persistence.backends.sql import TokenModel
@@ -75,7 +74,6 @@ cli.CMDS.append(TokenList)
 
 
 if __name__ == '__main__':
-    environment.use_stdlib()
 
     dev_conf = os.path.join(possible_topdir,
                             'etc',
@@ -85,9 +83,9 @@ if __name__ == '__main__':
         config_files = [dev_conf]
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--critical', type=int, default=1000, 
+    parser.add_argument('-c', '--critical', type=int, default=10000, 
 	                    help='Critical value', action='store')
-    parser.add_argument('-w', '--warning', type=int, default=10000, 
+    parser.add_argument('-w', '--warning', type=int, default=1000, 
 	                    help='Warning value', action='store')
     args = vars(parser.parse_args())
 	
@@ -96,3 +94,4 @@ if __name__ == '__main__':
 
     # keystone-manage wants a command as a argv, so give it token_list
     cli.main(argv=[sys.argv[0],'token_list'], config_files=config_files)
+
