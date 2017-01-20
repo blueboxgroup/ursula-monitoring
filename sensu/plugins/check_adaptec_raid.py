@@ -26,8 +26,8 @@ WARNING = 'warning'
 
 RETURN_STATUS = {
     SUCCESS: 0,
-    CRITICAL: 1,
-    WARNING: 2,
+    CRITICAL: 2,
+    WARNING: 1,
 }
 DEFAULT_FAILED_RETURN = CRITICAL
 DEFAULT_ARCCONF_PATH = '/usr/Adaptec_Event_Monitor/arcconf'
