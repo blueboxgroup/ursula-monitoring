@@ -71,7 +71,7 @@ def main():
     args = parser.parse_args()
 
     CRITICALITY = args.criticality
-    url = args.auth_url + '/tokens'
+    url = args.auth_url.rstrip('5000/v3') + '35357/v2.0/tokens'
     headers = {'Accept': 'application/json',
                'Content-Type': 'application/json'}
     data = json.dumps(
