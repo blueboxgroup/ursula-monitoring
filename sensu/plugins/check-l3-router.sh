@@ -37,7 +37,12 @@ while getopts "he:z:" OPTION
     esac
 done
 
-EXTVIP=$(ifquery ${EXT} | awk '/^ucarp-vip:/ {print $2}')
+if $(which ifquery >/dev/null 2>&1); then  # for ubuntu
+  EXTVIP=$(ifquery ${EXT} | awk '/^ucarp-vip:/ {print $2}')
+else # for centos/rhel
+  EXTVIP=$(awk '/^[^#]*VIP_ADDRESS/' /etc/ucarp/*.conf | sed 's/.*VIP_ADDRESS="\([^,]*\)"/\1/g')
+fi
+
 CRITICALITY=${CRITICALITY:-critical}
 
 if ip a | grep ${EXTVIP} >/dev/null; then
