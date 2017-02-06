@@ -20,8 +20,8 @@ username = os.environ['OS_USERNAME']
 password = os.environ['OS_PASSWORD']
 project_name = os.environ['OS_TENANT_NAME']
 auth_url = os.environ['OS_AUTH_URL']
-user_domain_name = os.environ['OS_USER_DOMAIN_NAME']
-project_domain_name = os.environ['OS_PROJECT_DOMAIN_NAME']
+user_domain_name = os.getenv('OS_USER_DOMAIN_NAME', 'Default')
+project_domain_name = os.getenv('OS_PROJECT_DOMAIN_NAME', 'Default')
 
 auth = identity.Password(username=username,
                          password=password,
