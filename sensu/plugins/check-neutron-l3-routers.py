@@ -12,26 +12,7 @@ import argparse
 import sys
 import os
 
-from keystoneauth1 import identity
-from keystoneauth1 import session
-from neutronclient.v2_0 import client as neutron_client
-
-username = os.environ['OS_USERNAME']
-password = os.environ['OS_PASSWORD']
-project_name = os.environ['OS_TENANT_NAME']
-auth_url = os.environ['OS_AUTH_URL']
-user_domain_name = os.getenv('OS_USER_DOMAIN_NAME', 'Default')
-project_domain_name = os.getenv('OS_PROJECT_DOMAIN_NAME', 'Default')
-
-auth = identity.Password(username=username,
-                         password=password,
-                         project_name=project_name,
-                         auth_url=auth_url,
-                         user_domain_name=user_domain_name,
-                         project_domain_name=project_domain_name)
-
-sess = session.Session(auth=auth)
-neutron = neutron_client.Client(session=sess)
+import shade
 
 STATE_OK = 0
 STATE_WARNING = 1
@@ -76,6 +57,9 @@ def main():
     search_opts = {
         'all_tenants': True,
         }
+		
+    cloud = shade.openstack_cloud()
+    neutron = cloud.neutron_client
     router_list = neutron.list_routers()
     if len(router_list['routers']) > args.max_routers:
         print("WARNING: Number of routers more than the max: %d"
