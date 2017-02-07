@@ -1,115 +1,72 @@
 #!/usr/bin/env python
 #
-# Calls neutron agent api, checks for duplicate with same hostname
-#
-# return CRITICAL if any duplicate agent on same host found
+# Calls neutron agent api
+# Checks that there are no duplicate neutron agents with the same hostname
+# return CRITICAL if any duplicate agents
+# return OK if no duplicate agents
 #
 # Jose L Coello Enriquez <jlcoello@us.ibm.com>
 # Dean Daskalantonakis <ddaskal@us.ibm.com>
+# Rachel Wong <rcwong@.us.ibm.com>
 
 import argparse
 import sys
 import os
-import json
-import requests
+
+from keystoneauth1 import identity
+from keystoneauth1 import session
+from neutronclient.v2_0 import client as neutron_client
+
+username = os.environ['OS_USERNAME']
+password = os.environ['OS_PASSWORD']
+project_name = os.environ['OS_TENANT_NAME']
+auth_url = os.environ['OS_AUTH_URL']
+user_domain_name = os.getenv('OS_USER_DOMAIN_NAME', 'Default')
+project_domain_name = os.getenv('OS_PROJECT_DOMAIN_NAME', 'Default')
+
+auth = identity.Password(username=username,
+                         password=password,
+                         project_name=project_name,
+                         auth_url=auth_url,
+                         user_domain_name=user_domain_name,
+                         project_domain_name=project_domain_name)
+
+sess = session.Session(auth=auth)
+neutron = neutron_client.Client(session=sess)
 
 STATE_OK = 0
-STATE_WARNING = 1
-STATE_CRITICAL = 2
-CRITICALITY = 'critical'
-
-timeout = 30
-
-
-def switch_on_criticality():
-    if CRITICALITY == 'warning':
-        sys.exit(STATE_WARNING)
-    else:
-        sys.exit(STATE_CRITICAL)
-
-
-def request(url, method='GET', retries=2, **kwargs):
-    r = None
-    try:
-        for i in range(retries + 1):
-            if i > 0:
-                time.sleep(2)
-            r = requests.request(method, url, **kwargs)
-            if r.status_code:
-                break
-    except requests.exceptions.RequestException as e:
-        print("%s returned %s" % (url, e))
-
-    return r.json()
-
+STATE_CRITICAL = 1
 
 def check_agents(agent_list):
     agent_dictionary = {}
 
     for agent in agent_list['agents']:
         agent_type = agent['agent_type']
-        host = agent['host'].split('.')[0]
+        host = agent['host']
 
         if agent_type in agent_dictionary:
             if host in agent_dictionary[agent_type]:
                 print("Duplicate agent: %s on host: %s" % (agent_type, host))
-                switch_on_criticality()
+		return STATE_CRITICAL
             else:
                 agent_dictionary[agent_type].add(host)
         else:
             agent_dictionary[agent_type] = set()
             agent_dictionary[agent_type].add(host)
 
+    return STATE_OK
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-u', '--user', default=os.environ['OS_USERNAME'])
-    parser.add_argument('-p', '--password', default=os.environ['OS_PASSWORD'])
-    parser.add_argument('-t', '--tenant', default=os.environ['OS_TENANT_NAME'])
-    parser.add_argument('-a', '--auth-url', default=os.environ['OS_AUTH_URL'])
-    parser.add_argument('-z', '--criticality', default='critical')
-    args = parser.parse_args()
+    agent_status = STATE_OK
+    agent_list = neutron.list_agents()
 
-    CRITICALITY = args.criticality
-    url = args.auth_url.rstrip('5000/v3') + '35357/v2.0/tokens'
-    headers = {'Accept': 'application/json',
-               'Content-Type': 'application/json'}
-    data = json.dumps(
-        {
-            'auth': {
-                'tenantName': args.tenant,
-                'passwordCredentials': {
-                    'username': args.user,
-                    'password': args.password
-                }
-            }
-        })
-
-    r = request(url, 'POST', 4, data=data, headers=headers)
-    token = None
-    if r:
-        access = r['access']
-        token = access['token']['id']
-
-    if not token:
-        switch_on_criticality()
-
-    endpoints = {}
-    for service in access['serviceCatalog']:
-        for endpoint in service['endpoints']:
-            endpoints[service['name']] = endpoint.get('internalURL')
-
-    headers = {'Accept': 'application/json', 'X-Auth-Project-Id': args.tenant,
-               'X-Auth-Token': token}
-
-    endpoint = endpoints['neutron'] + '/v2.0/agents.json'
-    agent_list = request(endpoint, headers=headers)
-    if not agent_list:
-        print("API call failed")
-        sys.exit(STATE_WARNING)
-    check_agents(agent_list)
-    print("No duplicate neutron agents")
-    sys.exit(STATE_OK)
-
+    agent_status = check_agents(agent_list)
+    if agent_status == STATE_CRITICAL:
+        print ("CRITICAL: Duplicate neutron agents.")
+	sys.exit(STATE_CRITICAL)
+    elif agent_status == STATE_OK:
+	print ("OK: No duplicate neutron agents.")
+	sys.exit(STATE_OK)
+    
 if __name__ == "__main__":
     main()
