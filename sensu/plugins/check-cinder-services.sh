@@ -9,7 +9,7 @@ done
 CRITICALITY=${CRITICALITY:-critical}
 
 set -e
-if openstack volume service list | grep "down"; then
+if cinder service-list | grep "down"; then
   echo "a cinder service is down"
   if [ "$CRITICALITY" == "warning" ]; then
     exit 1
