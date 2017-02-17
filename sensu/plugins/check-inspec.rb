@@ -41,18 +41,23 @@ class CheckInspec < Sensu::Plugin::Check::CLI
          required: true,
          default: '/etc/inspec/controls'
 
+  option :attrs,
+         short: '-a /tmp/dir',
+         long: '--attrs /tmp/dir',
+         default: '/etc/inspec/controls/attributes.yml'
+
   option :severity,
          short: '-s severity',
          long: '--severity severity',
          default: 'critical'
 
-  def inspec(path)
-    inspec = `inspec exec --format=json-min #{path}`
+  def inspec(controls, attrs)
+    inspec = `inspec exec #{controls} --attrs #{attrs} --format=json-min`
     JSON.parse(inspec)
-  end   
+  end
 
   def run
-    results = inspec(config[:controls])
+    results = inspec(config[:controls], config[:attrs])
     passed = 0
     failed = 0
     msg = ""
