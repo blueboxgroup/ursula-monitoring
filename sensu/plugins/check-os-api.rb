@@ -33,7 +33,7 @@ class CheckOSApi < Sensu::Plugin::Check::CLI
     when "heat"
       "heat stack-list"
     when "ceilometer"
-      "ceilometer meter-list"
+      "ceilometer meter-list -l 1"
     end
   end
 
