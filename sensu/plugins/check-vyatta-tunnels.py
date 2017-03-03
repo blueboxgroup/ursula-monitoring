@@ -16,7 +16,7 @@ STATE_OK = 0
 STATE_WARNING = 1
 STATE_CRITICAL = 2
 CRITICALITY = 'critical'
-
+DOWN = 2
 
 def switch_on_criticality():
     if CRITICALITY == 'warning':
@@ -59,11 +59,11 @@ def main():
         switch_on_criticality()
 
     for index, device in enumerate(device_list):
-        if " vti" in str(device):
+        if "vti" in str(device) and "ip_" not in str(device):
             status += "Device: %s " % device.split("STRING: ")[1].rstrip()
             status += "%s\n" % device_status[index].split("INTEGER: ")[1]
 
-    if "down" in status:
+    if str(DOWN) in status:
         print("%s: One or more tunnels are down on Vyatta:\n%s"
               % (args.criticality.upper(), status))
         switch_on_criticality()
