@@ -6,6 +6,7 @@ import sys
 import time
 import traceback
 from collections import namedtuple
+from argparse import ArgumentParser
 
 import shade
 
@@ -18,10 +19,11 @@ V2_ERR_MSG = 'This script assumes it runs with v2 auth and a v2 keystone ' \
 
 
 class CloudMetrics(object):
-    def __init__(self):
+    def __init__(self, scheme):
         self.cloud = shade.openstack_cloud()
         self._projects = None
         self._users = None
+        self._scheme = scheme
 
     @property
     def projects(self):
@@ -51,13 +53,15 @@ class CloudMetrics(object):
         return len(self.users)
 
     def users_per_project(self):
-        UsersPerProject = namedtuple('UsersPerProject', 'proj_id, num_users')
-        return (UsersPerProject(proj.id, len(proj.list_users()))
+        UsersPerProject = namedtuple('UsersPerProject', 'proj_name, num_users')
+        return (UsersPerProject(proj.name, len(proj.list_users()))
                 for proj in self.projects)
 
     def graphite_print(self, users, projects, users_per_proj):
         utime = time.time()
         metric_path = "usage.keystone.{path}"
+        if self._scheme:
+            metric_path = self._scheme + "."+ metric_path 
         outstr = "{metric_path} {value} {time}"
 
         path = metric_path.format(path='users')
@@ -67,7 +71,7 @@ class CloudMetrics(object):
         print(outstr.format(metric_path=path, value=projects, time=utime))
 
         for proj in users_per_proj:
-            p = 'project_id.{}.users'.format(proj.proj_id)
+            p = 'project_name.{}.users'.format(proj.proj_name)
             path = metric_path.format(path=p)
             print(outstr.format(
                 metric_path=path, value=proj.num_users, time=utime
@@ -81,8 +85,11 @@ class CloudMetrics(object):
 
 
 def main():
+    parser = ArgumentParser()
+    parser.add_argument('-s', '--scheme')
+    args = parser.parse_args()
     try:
-        CloudMetrics().run()
+        CloudMetrics(args.scheme).run()
     except shade.exc.OpenStackCloudException:
         traceback.print_exc()
         print(V2_ERR_MSG, file=sys.stderr)

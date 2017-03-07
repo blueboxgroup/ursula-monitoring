@@ -74,8 +74,9 @@ class SwiftMetricsParser(object):
 
 
 class SwiftMetrics(object):
-    def __init__(self, ip, port):
-        self.baseurl = "http://{}:{}/recon/{{path}}".format(ip, port)
+    def __init__(self, ip, port, scheme):
+        self.baseurl = "http://{}:{}/recon/{{path}}".format(ip, port, scheme)
+        self.scheme = scheme
         self.reconpaths = (
             'diskusage',
             'quarantined',
@@ -83,7 +84,6 @@ class SwiftMetrics(object):
             'async',
             'replication/account',
             'replication/container',
-            'replication/object',
             'updater/container',
             'updater/object',
         )
@@ -100,7 +100,7 @@ class SwiftMetrics(object):
 
     def graphite_print(self, parser):
         utime = time.time()
-        metric_path = "recon.swift.{name}"
+        metric_path = self.scheme + ".{name}"
         outstr = "{metric_path} {value} {time}"
 
         for path, val in parser.parse():
@@ -127,6 +127,11 @@ def parse_args():
         default='6000',
         help='Swift Recon API port'
     )
+    parser.add_argument(
+        '--scheme',
+        default='recon.swift',
+        help='Metrics Scheme'
+    )
     return parser.parse_args()
 
 
@@ -135,7 +140,7 @@ def process_args(args):
         ip = args.ip_addr
     else:
         ip = get_ip_address(args.interface)
-    return ip, args.port
+    return ip, args.port, args.scheme
 
 
 def main():
