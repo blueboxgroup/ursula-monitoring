@@ -22,7 +22,7 @@
 #   check-inspec --controls /etc/inspec/controls
 #
 # NOTES:
-#   Critical severity level is set as the default 
+#   Critical severity level is set as the default
 #
 # LICENSE:
 #   Copyright 2016 IBM
@@ -60,18 +60,23 @@ class CheckInspec < Sensu::Plugin::Check::CLI
     results = inspec(config[:controls], config[:attrs])
     passed = 0
     failed = 0
+    skipped = 0
     msg = ""
     results['controls'].each do |control|
       #puts control
       if control['status'] == "passed"
         passed += 1
+      elsif control['status'] == "skipped"
+        skipped += 1
       else
         failed += 1
         msg += "#{control['id']} #{control['code_desc']} - #{control['status']}\n"
       end
     end
 
-    if failed
+    msg += "Passed: %s Skipped: %s Failed: %s" % [passed, skipped, failed]
+
+    if failed > 0
       if config[:severity] == 'warning'
         warning msg
       else
