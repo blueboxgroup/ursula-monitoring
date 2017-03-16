@@ -4,8 +4,8 @@
 #
 # DESCRIPTION:
 #   This plugin is used to get ceph capacity metrics for using ceph as
-#   OpenStack Cinder's driver. 
-#   
+#   OpenStack Cinder's driver.
+#
 #   *.poolname.used_bytes   using 'ceph df' to get 'bytes_used'
 #   *.poolname.max_avail_bytes   using 'ceph df' to get 'max_avail'
 #   *.poolname.total_bytes using 'ceph df' to get 'bytes_used'+'max_avail'
@@ -29,8 +29,8 @@
 #   #YELLOW
 #
 # NOTES:
-#   Runs 'ceph df' and 'rbd ls -l' command(s) to report usage of ceph cluster.  
-#   May need read access to ceph keyring and/or root access for 
+#   Runs 'ceph df' and 'rbd ls -l' command(s) to report usage of ceph cluster.
+#   May need read access to ceph keyring and/or root access for
 #   authentication.
 #
 # LICENSE:
@@ -85,8 +85,8 @@ class CephPoolCapacity < Sensu::Plugin::Metric::CLI::Graphite
   def print_pool_usage(data)
     metrics = Hash.new
 	timestamp = Time.now.to_i
-	
-    data['pools'].each do | pool |  
+
+    data['pools'].each do | pool |
       metrics[pool['name']] = Hash.new
       metrics[pool['name']]['used_bytes'] = pool['stats']['bytes_used']
       metrics[pool['name']]['total_bytes'] = pool['stats']['bytes_used'] + pool['stats']['max_avail']
@@ -96,15 +96,15 @@ class CephPoolCapacity < Sensu::Plugin::Metric::CLI::Graphite
       allocated_result = run_cmd('rbd ls -l --format=json ' + pool['name'])
       images = JSON.parse(allocated_result)
       total_allocated_bytes = 0
-  
-      images.each do | image | 
+
+      images.each do | image |
         total_allocated_bytes += image['size']
       end unless allocated_result.to_s == ''
-	  
+
       metrics[pool['name']]['cinder_allocated_bytes'] = total_allocated_bytes
 	  metrics[pool['name']]['cinder_avail_bytes'] = pool['stats']['bytes_used'] + pool['stats']['max_avail'] - total_allocated_bytes
 	  metrics[pool['name']]['allocated_percentage'] = total_allocated_bytes * 100.0 / (pool['stats']['bytes_used'] + pool['stats']['max_avail'])
-      
+
     end
 
     metrics.each do |parent, children|
@@ -113,33 +113,54 @@ class CephPoolCapacity < Sensu::Plugin::Metric::CLI::Graphite
       end
     end
   end
-	
+
   def print_cluster_usage(data)
     metrics = Hash.new
 	timestamp = Time.now.to_i
-	
+
 	metrics['cluster'] = Hash.new
 	metrics['cluster']['total_used_bytes'] = data['stats']['total_used_bytes']
 	metrics['cluster']['total_bytes'] = data['stats']['total_bytes']
 	metrics['cluster']['total_avail_bytes'] = data['stats']['total_avail_bytes']
 	metrics['cluster']['used_percentage'] = data['stats']['total_used_bytes'] * 100.0 / data['stats']['total_bytes']
- 
+
     metrics.each do |parent, children|
       children.each do |child, value|
         output [config[:scheme], parent, child].join("."), value, timestamp
       end
     end
   end
-  
+
+  def print_osd_usage(data)
+    metrics = Hash.new
+    timestamp = Time.now.to_i
+
+    data['nodes'].each do | node |
+      metrics[node['id']] = node
+    end
+
+    metrics.each do |parent, children|
+      children.each do |child, value|
+        output [config[:scheme], 'osd', parent, child].join("."), value, timestamp
+      end
+    end
+  end
+
   def run
-    #get usage data
+    #get pool and cluster usage data
     result = run_cmd('ceph df --format=json')
     data = JSON.parse(result)
 
-	print_pool_usage(data)
-	print_cluster_usage(data)
+    print_pool_usage(data)
+    print_cluster_usage(data)
+
+    #get osd usage data
+    result = run_cmd('ceph osd df --format=json')
+    data = JSON.parse(result)
+
+    print_osd_usage(data)
 
     exit
-	
+
   end
 end
