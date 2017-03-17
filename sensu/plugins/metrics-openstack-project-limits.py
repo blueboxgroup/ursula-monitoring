@@ -25,10 +25,10 @@ class CloudMetrics(object):
 
     def get_limits(self, service_type):
         if service_type == "nova":
-            return ([self.cloud.nova_client.limits.get(project['id'])._info.copy(),project['name']]
+            return ([self.cloud.nova_client.limits.get(tenant_id=project['id'])._info.copy(),project['name']]
                 for project in self.cloud.list_projects())
         if service_type == "cinder":
-            return ([self.cloud.cinder_client.limits.get(project['id'])._info.copy(),project['name']]
+            return ([self.cloud.cinder_client.limits.get(tenant_id=project['id'])._info.copy(),project['name']]
                 for project in self.cloud.list_projects())
 
     def graphite_print(self, limits, service_type):
