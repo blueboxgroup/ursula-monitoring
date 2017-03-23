@@ -1162,7 +1162,7 @@ MAIN: {
   my $platform = $^O;
 
   # Check storcli tool
-  $storcli = `which storcli64`;
+  $storcli = `which storcli64 2>/dev/null`;
   chomp($storcli);
   
   if( !(GetOptions(
