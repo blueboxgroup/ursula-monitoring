@@ -21,25 +21,38 @@ import re
 from sensu_plugin import SensuPluginCheck
 from subprocess import check_output, CalledProcessError, STDOUT
 
+STATE_OK = 0
+STATE_WARNING = 1
+STATE_CRITICAL = 2
+
+STATE_STR = {STATE_OK: 'OK', STATE_WARNING: 'WARNING', STATE_CRITICAL: 'CRITICAL' }
 
 class SwiftDispersionCheck(SensuPluginCheck):
 
     def setup(self):
-        self.parser.add_argument('-c', '--container-crit', type=int,
+        self.parser.add_argument('-c', '--container-crit', type=int, default=98,
                                  help='Container critical dispersion percent')
-        self.parser.add_argument('-d', '--container-warn', type=int,
+        self.parser.add_argument('-d', '--container-warn', type=int, default=99,
                                  help='Container warning dispersion percent')
-        self.parser.add_argument('-o', '--object-crit', type=int,
+        self.parser.add_argument('-o', '--object-crit', type=int, default=98,
                                  help='Object critical dispersion percent')
-        self.parser.add_argument('-n', '--object-warn', type=int,
+        self.parser.add_argument('-n', '--object-warn', type=int,  default=99,
                                  help='Object warning dispersion percent')
+        self.parser.add_argument('-i', '--insecure', dest='insecure', default=False,
+                                 action='store_true', help='ignore SSL')
+        self.parser.add_argument('-z', '--criticality', type=str, default='critical',
+                                 help='highest alert level')
 
     def run(self):
 
         output = None
         try:
-            output = check_output(['swift-dispersion-report', '-j'],
-                                  stderr=STDOUT)
+            if self.options.insecure:
+                output = check_output(['swift-dispersion-report', '-j', 
+				                       '--insecure' ], stderr=STDOUT)
+            else:
+                output = check_output(['swift-dispersion-report', '-j' ],
+                                        stderr=STDOUT)
 
             # strip any ERRORs that come through
             p = re.compile(r'(\{.*\})')
@@ -52,26 +65,39 @@ class SwiftDispersionCheck(SensuPluginCheck):
             return
 
         dispersion = json.loads(output)
-        container_pct = int(dispersion['container']['pct_found'])
-        object_pct = int(dispersion['object']['pct_found'])
 
-        msg = "Swift %s dispersion %s threshold %d > %d"
-        if ((self.options.container_crit and
-             self.options.container_crit > container_pct)):
-            self.critical(msg % ('container', 'CRITICAL',
-                                 self.options.container_crit, container_pct))
-        elif ((self.options.object_crit and
-               self.options.object_crit > object_pct)):
-            self.critical(msg % ('object', 'CRITICAL',
-                                 self.options.object_crit, object_pct))
-        elif ((self.options.container_warn and
-               self.options.container_warn > container_pct)):
-            self.critical(msg % ('container', 'WARNING',
-                                 self.options.container_warn, container_pct))
-        elif ((self.options.object_warn and
-               self.options.object_warn > object_pct)):
-            self.critical(msg % ('object', 'WARNING',
-                                 self.options.object_warn, object_pct))
+        msg = "Swift %s dispersion %d < %s threshold. "
+        output = ""
+        container_state = STATE_OK
+        object_state = STATE_OK
+        if self.options.criticality == 'critical':
+            alert_level = STATE_CRITICAL  
+        else:
+            alert_level = STATE_WARNING
+
+        if dispersion['container'] is not None:
+            container_pct = int(dispersion['container']['pct_found'])
+            if self.options.container_crit > container_pct:
+                container_state = STATE_CRITICAL
+            elif self.options.container_warn > container_pct:
+                container_state = STATE_WARNING
+            if container_state:
+                output = msg % ('container', container_pct, STATE_STR[container_state]) 
+
+        if dispersion['object'] is not None:
+            object_pct = int(dispersion['object']['pct_found'])
+            if self.options.object_crit > object_pct:
+                object_state = STATE_CRITICAL
+            elif self.options.object_warn > object_pct:
+                object_state = STATE_WARNING	
+            if object_state:
+                output += msg % ('object', object_pct, STATE_STR[object_state]) 				
+		
+        output_state = min(max(container_state, object_state), alert_level)
+        if output_state == STATE_CRITICAL:
+            self.critical(output)
+        elif output_state == STATE_WARNING:
+            self.warning(output)
         else:
             self.ok()
 
