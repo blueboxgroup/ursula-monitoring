@@ -27,7 +27,7 @@
 #   normally considered Ceph warnings to be overlooked and considered
 #   as 'OK' (e.g. noscrub,nodeep-scrub).
 #
-#   Using -d (--detailed) and/or -o (--osd-tree) and/or -f (--osd-df) 
+#   Using -d (--detailed) and/or -o (--osd-tree) and/or -f (--osd-df)
 #   and/or -p (--osd-perf) will dramatically increase
 #   verboseness during warning/error reports, however they may add
 #   additional insights to cluster-related problems during notification.
@@ -36,7 +36,7 @@
 #   normally consdiered Ceph warning to be escalated and considered as
 #   'ERR' (e.g. osds are down,near full osd,clock skew,mons down)
 #
-#   Using -z (--criticality) option to change criticality level. 
+#   Using -z (--criticality) option to change criticality level.
 #   if criticality is warning, all Critical change to be Warning.
 #
 # LICENSE:
@@ -108,14 +108,14 @@ class CheckCephHealth < Sensu::Plugin::Check::CLI
          long: '--osd-df',
          boolean: true,
          default: false
-		 
+
   option :osd_perf,
          description: 'Show OSD performance (verbose!)',
          short: '-p',
          long: '--osd-perf',
          boolean: true,
          default: false
-		 
+
    option :criticality,
           description: 'Set criticality level, critical is default',
           short: '-z criticality',
@@ -191,26 +191,28 @@ class CheckCephHealth < Sensu::Plugin::Check::CLI
 
   def run
     result = check_ceph_health
+    osd_down_count = run_cmd('ceph osd tree | grep down | wc -l').to_i
     unless result.start_with?('HEALTH_OK')
       result = strip_warns(result) if config[:ignore_flags]
     end
-    ok result if result.start_with?('HEALTH_OK')
+    ok result if result.start_with?('HEALTH_OK') and osd_down_count==0
 
-    result += run_cmd('ceph osd tree') if config[:osd_tree] and result.include?('osds are down')
+    result += run_cmd('ceph osd tree') if config[:osd_tree] and (result.include?('osds are down') or osd_down_count>0)
     result += run_cmd('ceph osd df') if config[:osd_df] and result.include?('full osd')
     result += run_cmd('ceph osd perf') if config[:osd_perf] and result.include?('requests are blocked')
 
     warning result if config[:criticality] == 'warning'
     critical result if result.start_with?('HEALTH_ERR')
-	
+
     # set config[:escalate_flags] default as 'near full osd' if no escalate_flags options provided.
     config[:escalate_flags]=['near full osd','osds are down','clock skew','mons down'] unless config[:escalate_flags]
     # escalate optional warning to critical
     config[:escalate_flags].each do |p|
       critical result if result.include?(p)
     end
-	
+
+    critical result if osd_down_count>0
     warning result
-	
+
   end
 end
