@@ -9,7 +9,7 @@ done
 CRITICALITY=${CRITICALITY:-critical}
 
 set -e
-if neutron agent-list -c alive | grep xxx; then
+if openstack network agent list -c State | grep -i down; then
   echo "a neutron agent is down"
   if [ "$CRITICALITY" == "warning" ]; then
     exit 1
