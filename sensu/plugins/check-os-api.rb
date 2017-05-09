@@ -34,6 +34,8 @@ class CheckOSApi < Sensu::Plugin::Check::CLI
       "openstack stack list"
     when "ceilometer"
       "ceilometer meter-list -l 1"
+    when "barbican"
+      "openstack secret list"
     end
   end
 
