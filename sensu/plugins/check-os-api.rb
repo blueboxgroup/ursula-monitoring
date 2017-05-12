@@ -25,15 +25,17 @@ class CheckOSApi < Sensu::Plugin::Check::CLI
   def safe_command
     cmd = case config[:service]
     when "nova"
-      "openstack server list"
+      "openstack server list --limit 1"
     when "glance"
-      "openstack image list"
+      "openstack image list --limit 1"
     when "keystone"
       "openstack endpoint list"
     when "heat"
-      "openstack stack list"
+      "openstack stack list --limit 1"
     when "ceilometer"
       "ceilometer meter-list -l 1"
+    when "barbican"
+      "openstack secret list -l 1"
     end
   end
 
