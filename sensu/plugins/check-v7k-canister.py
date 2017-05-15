@@ -51,14 +51,31 @@ def check_canister_status(args):
     cmd = "ssh -i %s -p %s %s@%s lsnodecanister|awk '{print $2 \"\t\"  $4}'" % (
         args.ssh_key, args.v7k_port, args.user, args.v7k_host)
     output = subprocess.check_output(cmd, shell=True)
+    firstrow = True
+    online_count = 0
     for line in output.split('\n'):
-        match = re.match('offline', line)
-        if match:
-            print('%s CRITICAL:Canister(%s) is offline' %
-                  (CHECK, line.split()[0]))
+        if firstrow:
+            firstrow = False
+            continue
+        node_info = line.split()
+        if len(node_info) >= 2:
+            node = line.split()[0]
+            status = line.split()[1]
+        else:
+            continue
+        if status == 'online':
+            online_count = online_count + 1
+        else:
+            print('%s CRITICAL:Canister(%s) is under %s status' %
+                  (CHECK, node, status))
             exit_with_status(CRITICAL)
-    print('%s OK:Both Canisters are online' % (CHECK))
-    exit_with_status(SUCCESS)
+    if(online_count == 2):
+        print('%s OK:Both Canisters are online' % (CHECK))
+        exit_with_status(SUCCESS)
+    else:
+        print('%s CRITICAL:Only (%s/2) Canister is under online status' %
+              (CHECK, online_count))
+        exit_with_status(CRITICAL)
 
 
 def main():
