@@ -36,6 +36,8 @@ class CheckOSApi < Sensu::Plugin::Check::CLI
       "ceilometer meter-list -l 1"
     when "barbican"
       "openstack secret list -l 1"
+    when "aodh"
+      "ceilometer alarm-list"
     end
   end
 
