@@ -30,7 +30,7 @@ def metric_output(args):
     if not ssh_key_exists(args.ssh_key):
         print("private key no present at %s" % args.ssh_key)
 
-    cmd = "ssh -i %s  -p %s  %s@%s lsnodecanisterstats" % (
+    cmd = "ssh -o \"StrictHostKeyChecking no\" -i %s  -p %s  %s@%s lsnodecanisterstats" % (
         args.ssh_key, args.v7k_port, args.user, args.v7k_host)
     output = subprocess.check_output(cmd, shell=True)
     firstrow = True

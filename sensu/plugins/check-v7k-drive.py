@@ -48,7 +48,7 @@ def get_mdisks(args):
               (CHECK, args.ssh_key))
         exit_with_status(WARNING)
 
-    cmd = "ssh -i %s -p %s %s@%s  lsmdisk -filtervalue mdisk_grp_name=%s|awk '{print $2}'" % (
+    cmd = "ssh -o \"StrictHostKeyChecking no\" -i %s -p %s %s@%s  lsmdisk -filtervalue mdisk_grp_name=%s|awk '{print $2}'" % (
         args.ssh_key, args.v7k_port, args.user, args.v7k_host, args.pool_name)
     output = subprocess.check_output(cmd, shell=True)
     firstrow = True
@@ -65,7 +65,7 @@ def get_mdisks(args):
 def check_v7k_disk(args):
     mdisks=get_mdisks(args)
     for mdisk in mdisks:
-        cmd = "ssh -i %s -p %s %s@%s lsdrive -filtervalue mdisk_name=%s|awk '{print $1 \"\t\"  $2}'" % (
+        cmd = "ssh -o \"StrictHostKeyChecking no\" -i %s -p %s %s@%s lsdrive -filtervalue mdisk_name=%s|awk '{print $1 \"\t\"  $2}'" % (
             args.ssh_key, args.v7k_port, args.user, args.v7k_host,mdisk)
         output = subprocess.check_output(cmd, shell=True)
         firstrow = True

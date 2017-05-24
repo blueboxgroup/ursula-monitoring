@@ -48,7 +48,7 @@ def check_canister_status(args):
               (CHECK, args.ssh_key))
         exit_with_status(WARNING)
 
-    cmd = "ssh -i %s -p %s %s@%s lsnodecanister|awk '{print $2 \"\t\"  $4}'" % (
+    cmd = "ssh -o \"StrictHostKeyChecking no\" -i %s -p %s %s@%s lsnodecanister|awk '{print $2 \"\t\"  $4}'" % (
         args.ssh_key, args.v7k_port, args.user, args.v7k_host)
     output = subprocess.check_output(cmd, shell=True)
     firstrow = True
