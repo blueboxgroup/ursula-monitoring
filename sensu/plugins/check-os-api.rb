@@ -40,7 +40,7 @@ class CheckOSApi < Sensu::Plugin::Check::CLI
   end
 
   def run
-    system("#{safe_command}")
+    system("#{safe_command}" + " > /dev/null ")
 
     if $?.exitstatus == 0
       exit
