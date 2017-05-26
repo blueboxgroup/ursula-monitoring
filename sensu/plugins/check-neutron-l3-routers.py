@@ -14,10 +14,13 @@ import os
 
 import shade
 
+from datetime import datetime
+
 STATE_OK = 0
 STATE_WARNING = 1
 STATE_CRITICAL = 2
 
+FMT ='%Y-%m-%dT%H:%M:%SZ'
 
 def check_router(router, router_agents):
     # Inputs: router dict & all agents associated with the router
@@ -46,18 +49,30 @@ def check_router(router, router_agents):
 
     return STATE_OK
 
+def delay_check(router, now, delay_seconds):
+
+    created_at = datetime.strptime(router['created_at'],FMT)
+    updated_at = datetime.strptime(router['updated_at'],FMT)
+    try:
+        if ((now - created_at).total_seconds() < delay_seconds
+              or (now - updated_at).total_seconds() < delay_seconds):
+            return True
+    except:
+        pass
+    return False
 
 def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-r', '--max_routers', type=int, default=100)
+    parser.add_argument('-d', '--delay_seconds', type=int, default=120)
     args = parser.parse_args()
     agent_status = STATE_OK
+    now = datetime.utcnow()
 
     search_opts = {
         'all_tenants': True,
         }
-		
     cloud = shade.openstack_cloud()
     neutron = cloud.neutron_client
     router_list = neutron.list_routers()
@@ -67,6 +82,8 @@ def main():
         sys.exit(STATE_WARNING)
 
     for router in router_list['routers']:
+        if delay_check(router, now, args.delay_seconds):
+            continue
         search_opts['router'] = router['id']
         router_agents = neutron.list_l3_agent_hosting_routers(**search_opts)
         agent_status = check_router(router, router_agents)
