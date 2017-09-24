@@ -8,9 +8,12 @@ require 'sensu-plugin/check/cli'
 
 class CheckControllerTuning < Sensu::Plugin::Check::CLI
   def run
-    tuning_status = `service ethernet-tuning status`
-    msg = "the ethernet-tuning service is disabled"
-    critical msg if tuning_status.include?("disabled")
-    ok
+    cmd = "/sbin/ethtool -n eth0 rx-flow-hash udp4 | grep -q 'L4 bytes'"
+    if system(cmd)
+      ok
+    else
+      msg = "the ethernet-tuning service is disabled"
+      critical msg
+    end
   end
 end
