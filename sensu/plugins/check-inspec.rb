@@ -52,7 +52,7 @@ class CheckInspec < Sensu::Plugin::Check::CLI
          default: 'critical'
 
   def inspec(controls, attrs)
-    inspec = `inspec exec #{controls} --attrs #{attrs} --format=json-min`
+    inspec = `inspec exec #{controls} --attrs #{attrs} --format=json-min --log-level=error`
     JSON.parse(inspec)
   end
 
