@@ -60,7 +60,7 @@ def check_adaptec_status(args):
          r"\s*Controller Status\s*:\s*(.*)",
          "Optimal", "Controller status not optimal"),
         (['GETCONFIG', '1', 'LD'],
-         r"\s*Status of logical device\s*:\s*(.*)",
+         r"\s*Status of Logical Device\s*:\s*(.*)",
          "Optimal", "Logical drive(s) not optimal"),
         (['GETCONFIG', '1', 'PD'],
          r"\s*S.M.A.R.T. warnings\s*:\s*(.*)",
