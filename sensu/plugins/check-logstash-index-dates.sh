@@ -5,6 +5,12 @@
 # Checks to ensure curator has deleted old indexes.
 #
 
+INDEX_MAX_AGE=$1
+if [[ -z $INDEX_MAX_AGE ]]; then
+    echo -e "USAGE: $0 INDEX_MAX_AGE\nERROR: Missing INDEX_MAX_AGE argument"
+    exit 2
+fi
+
 declare -a ERR_MSGS
 
 # joins elements of an array with the given character
@@ -27,23 +33,18 @@ function find_future_indexes {
 
 # checks for old indexes that were not curated
 function find_old_indexes {
-    for file in /etc/elasticsearch/delete_*.yml; do
-        INDEX_PREFIX=$(awk '/value/ {print $2}' $file | sed 's/-$//')
-        CUTOFF_DAYS_AGO=$(awk '/unit_count/ {print $2}' $file)
-        CUTOFF_DATE=`date --date="$(( $CUTOFF_DAYS_AGO + 1 )) day ago" +%Y.%m.%d`
+    CUTOFF_DATE=`date --date="$(( $INDEX_MAX_AGE + 1 )) day ago" +%Y.%m.%d`
 
-        count=0
-        for i in $(curl -s 'localhost:9200/_cat/indices' | grep -E "$INDEX_PREFIX-[0-9]{4}.[0-9]{2}.[0-9]{2}" | awk '{print $3}' | sort -n); do
-            if [[ ${i##$INDEX_PREFIX-} < $CUTOFF_DATE ]]; then
-                count=$(( $count + 1 ))
-                #echo "$i is older than $CUTOFF_DATE"
-            fi
-        done
-
-        if [[ $count -gt 0 ]]; then
-            ERR_MSGS+=("$count $INDEX_PREFIX index(es) older than $CUTOFF_DAYS_AGO days found.")
+    count=0
+    for i in $(curl -s 'localhost:9200/_cat/indices' | grep -E "[0-9]{4}.[0-9]{2}.[0-9]{2}" | awk '{print $3}' | sort -n); do
+        if [[ ${i##*-} < $CUTOFF_DATE ]]; then
+            count=$(( $count + 1 ))
         fi
     done
+
+    if [[ $count -gt 0 ]]; then
+        ERR_MSGS+=("$count $INDEX_PREFIX index(es) older than $INDEX_MAX_AGE days found.")
+    fi
 }
 
 find_future_indexes
