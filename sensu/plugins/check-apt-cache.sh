@@ -23,12 +23,12 @@ fi
 HOURS_SINCE_UPDATE=`echo $(( ($(date +%s) - $(date +%s -r "$FILE"))/60/60))`
 MINUTES_SINCE_UPDATE=`echo $(( ($(date +%s) - $(date +%s -r "$FILE"))/60))`
 
-if [[ $HOURS_SINCE_UPDATE -gt $WARNING_HOURS ]]; then
-    echo "WARNING: stale apt cache, $HOURS_SINCE_UPDATE hours old."
-    exit 1
-elif [[ $HOURS_SINCE_UPDATE -gt $CRITICAL_HOURS ]]; then
+if [[ $HOURS_SINCE_UPDATE -gt $CRITICAL_HOURS ]]; then
     echo "CRITICAL: stale apt cache, $HOURS_SINCE_UPDATE hours old."
     exit 2
+elif [[ $HOURS_SINCE_UPDATE -gt $WARNING_HOURS ]]; then
+    echo "WARNING: stale apt cache, $HOURS_SINCE_UPDATE hours old."
+    exit 1
 fi
 
 echo "OK: last apt cache update was ${HOURS_SINCE_UPDATE}h (${MINUTES_SINCE_UPDATE}m) ago"
